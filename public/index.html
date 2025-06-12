@@ -514,6 +514,144 @@
             display: inline-block;
         }
 
+        .report-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1500;
+        }
+
+        .report-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .report-content h3 {
+            margin-bottom: 20px;
+            color: #e74c3c;
+            text-align: center;
+        }
+
+        .warning-banner {
+            background: #f39c12;
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .report-reasons {
+            margin: 20px 0;
+        }
+
+        .report-reason {
+            display: block;
+            padding: 10px;
+            margin-bottom: 8px;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .report-reason:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .report-reason.selected {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
+        .report-textarea {
+            width: 100%;
+            min-height: 80px;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            resize: vertical;
+            margin: 15px 0;
+        }
+
+        .report-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .report-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+
+        .report-btn.send {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .report-btn.send:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+
+        .report-btn.cancel {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .report-btn.cancel:hover {
+            background: #7f8c8d;
+            transform: translateY(-2px);
+        }
+
+        .safety-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .safety-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+
+        .safety-btn:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+
+        .safety-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; transform: scale(0.8); }
             to { opacity: 1; transform: scale(1); }
@@ -562,7 +700,6 @@
             display: inline;
         }
 
-        /* تحسينات الجوال */
         @media (max-width: 768px) {
             .mobile-text {
                 display: inline;
@@ -586,7 +723,7 @@
             }
 
             .video-container {
-                aspect-ratio: 4/3; /* نسبة أفضل للجوال */
+                aspect-ratio: 4/3;
             }
             
             .header {
@@ -617,7 +754,6 @@
                 border-radius: 20px;
             }
 
-            /* جعل أزرار البدء والإيقاف تأخذ العرض الكامل */
             .control-btn:nth-child(1),
             .control-btn:nth-child(3) {
                 grid-column: 1 / -1;
@@ -653,7 +789,7 @@
 
             .chat-input input {
                 padding: 10px;
-                font-size: 16px; /* منع الزوم في iOS */
+                font-size: 16px;
             }
 
             .chat-input button {
@@ -663,7 +799,7 @@
 
             .country-select select {
                 padding: 12px;
-                font-size: 16px; /* منع الزوم في iOS */
+                font-size: 16px;
             }
 
             .status-panel h3 {
@@ -676,7 +812,6 @@
                 padding: 6px 0;
             }
 
-            /* تحسين نافذة الإذن للجوال */
             .permission-content {
                 padding: 25px 15px;
                 margin: 20px;
@@ -712,12 +847,10 @@
                 width: 100%;
             }
 
-            /* إخفاء النص الطويل في الأزرار على الجوال */
             .control-btn span.desktop-text {
                 display: none;
             }
 
-            /* تحسين الفيديو للجوال */
             .video-placeholder {
                 font-size: 1em;
             }
@@ -728,7 +861,6 @@
             }
         }
 
-        /* تحسينات للشاشات الصغيرة جداً */
         @media (max-width: 480px) {
             .container {
                 padding: 5px;
@@ -790,7 +922,6 @@
             }
         }
 
-        /* تحسينات للشاشات الأفقية على الجوال */
         @media (max-width: 768px) and (orientation: landscape) {
             .video-container {
                 aspect-ratio: 16/9;
@@ -815,10 +946,9 @@
             }
         }
 
-        /* تحسينات اللمس */
         @media (hover: none) and (pointer: coarse) {
             .control-btn {
-                min-height: 44px; /* الحد الأدنى لسهولة اللمس */
+                min-height: 44px;
                 padding: 12px 16px;
             }
 
@@ -831,7 +961,6 @@
                 min-height: 48px;
             }
 
-            /* تحسين حجم النص للقراءة */
             .message {
                 font-size: 16px;
                 line-height: 1.4;
@@ -843,7 +972,6 @@
             }
         }
 
-        /* منع التحديد والسحب للجوال */
         .video-container,
         .video-box,
         video {
@@ -854,7 +982,6 @@
             -webkit-touch-callout: none;
         }
 
-        /* تحسين الانتقالات للجوال */
         @media (max-width: 768px) {
             .control-btn,
             .permission-btn,
@@ -872,7 +999,6 @@
 </head>
 <body>
     <div class="container">
-        <!-- نافذة طلب الإذن -->
         <div id="permissionModal" class="permission-modal">
             <div class="permission-content">
                 <div class="permission-icon">🎥📱</div>
@@ -891,7 +1017,6 @@
             </div>
         </div>
 
-        <!-- نافذة الانستقرام -->
         <div id="instagramModal" class="instagram-popup" style="display: none;">
             <div class="instagram-content">
                 <div class="instagram-inner">
@@ -911,7 +1036,6 @@
             </div>
         </div>
 
-        <!-- نافذة التقارير -->
         <div id="reportModal" class="report-modal" style="display: none;">
             <div class="report-content">
                 <h3>🚨 الإبلاغ عن مخالفة</h3>
@@ -1088,13 +1212,11 @@
         </div>
     </div>
 
-    <!-- Socket.io Client -->
     <script src="/socket.io/socket.io.js"></script>
     
     <script>
         class ChatLivePro {
             constructor() {
-                // عناصر DOM
                 this.startBtnEl = document.getElementById('startBtn');
                 this.nextBtnEl = document.getElementById('nextBtn');
                 this.stopBtnEl = document.getElementById('stopBtn');
@@ -1110,23 +1232,19 @@
                 this.sendBtnEl = document.getElementById('sendBtn');
                 this.countrySelectEl = document.getElementById('countrySelect');
                 
-                // عناصر طلب الإذن
                 this.permissionModalEl = document.getElementById('permissionModal');
                 this.allowPermissionEl = document.getElementById('allowPermission');
                 this.denyPermissionEl = document.getElementById('denyPermission');
                 
-                // عناصر انستقرام
                 this.instagramModalEl = document.getElementById('instagramModal');
                 this.followBtnEl = document.getElementById('followBtn');
                 this.closeInstagramBtnEl = document.getElementById('closeInstagramBtn');
                 
-                // عناصر الإحصائيات
                 this.activeUsersEl = document.getElementById('activeUsers');
                 this.waitingUsersEl = document.getElementById('waitingUsers');
                 this.activeRoomsEl = document.getElementById('activeRooms');
                 this.connectionStatusEl = document.getElementById('connectionStatus');
 
-                // عناصر الأمان
                 this.reportModalEl = document.getElementById('reportModal');
                 this.reportBtnEl = document.getElementById('reportBtn');
                 this.blockBtnEl = document.getElementById('blockBtn');
@@ -1135,7 +1253,6 @@
                 this.reportDetailsEl = document.getElementById('reportDetails');
                 this.warningBannerEl = document.getElementById('warningBanner');
 
-                // متغيرات الحالة
                 this.socket = null;
                 this.localStream = null;
                 this.peerConnection = null;
@@ -1147,7 +1264,6 @@
                 this.cameraEnabled = true;
                 this.permissionGranted = false;
 
-                // إعداد WebRTC محسن
                 this.peerConfig = {
                     iceServers: [
                         { urls: 'stun:stun.l.google.com:19302' },
@@ -1170,27 +1286,23 @@
             }
 
             checkInstagramPopup() {
-                // التحقق من localStorage إذا تم عرض الانستقرام من قبل
-                const instagramShown = localStorage.getItem('khambaqah_instagram_shown');
+                const instagramShown = sessionStorage.getItem('khambaqah_instagram_shown');
                 
                 if (!instagramShown) {
-                    // عرض نافذة الانستقرام بعد 3 ثواني من دخول الموقع
                     setTimeout(() => {
                         this.showInstagramPopup();
-                    }, 3000);
+                    }, 2000);
                 }
             }
 
             showInstagramPopup() {
                 this.instagramModalEl.style.display = 'flex';
                 
-                // تسجيل أن النافذة تم عرضها
-                localStorage.setItem('khambaqah_instagram_shown', 'true');
+                sessionStorage.setItem('khambaqah_instagram_shown', 'true');
                 
-                // إخفاء تلقائي بعد 15 ثانية
                 setTimeout(() => {
                     this.hideInstagramPopup();
-                }, 15000);
+                }, 8000);
             }
 
             hideInstagramPopup() {
@@ -1200,7 +1312,6 @@
             showPermissionModal() {
                 this.permissionModalEl.style.display = 'flex';
                 
-                // إخفاء المحتوى الرئيسي حتى يتم منح الإذن
                 document.querySelector('.main-content').style.filter = 'blur(5px)';
                 document.querySelector('.header').style.filter = 'blur(5px)';
             }
@@ -1213,15 +1324,11 @@
 
             async requestPermissions() {
                 try {
-                    console.log('🎥 طلب إذن الكاميرا والميكروفون...');
-                    
-                    // طلب إذن الكاميرا والميكروفون
                     const stream = await navigator.mediaDevices.getUserMedia({
                         video: true,
                         audio: true
                     });
                     
-                    // إيقاف الستريم مؤقتاً (سنستخدمه لاحقاً)
                     stream.getTracks().forEach(track => track.stop());
                     
                     this.permissionGranted = true;
@@ -1234,8 +1341,6 @@
                     return true;
                     
                 } catch (error) {
-                    console.error('❌ تم رفض الإذن:', error);
-                    
                     let errorMessage = 'تم رفض الإذن للكاميرا والميكروفون';
                     
                     if (error.name === 'NotAllowedError') {
@@ -1253,9 +1358,7 @@
             }
 
             setupEventListeners() {
-                // أزرار طلب الإذن
                 this.allowPermissionEl.addEventListener('click', async () => {
-                    // منع النقر المتعدد
                     this.allowPermissionEl.disabled = true;
                     this.allowPermissionEl.textContent = '⏳ جاري طلب الإذن...';
                     
@@ -1271,10 +1374,7 @@
                     alert('❌ لا يمكن استخدام خمبقه بدون إذن الكاميرا والميكروفون');
                 });
 
-                // أزرار انستقرام
                 this.followBtnEl.addEventListener('click', () => {
-                    // تتبع النقر على زر المتابعة
-                    console.log('📸 تم النقر على متابعة انستقرام');
                     this.addMessage('شكراً لمتابعتنا على انستقرام! 🌟', 'system');
                     setTimeout(() => {
                         this.hideInstagramPopup();
@@ -1285,7 +1385,6 @@
                     this.hideInstagramPopup();
                 });
 
-                // أزرار الأمان
                 this.reportBtnEl.addEventListener('click', () => {
                     this.showReportModal();
                 });
@@ -1302,7 +1401,6 @@
                     this.hideReportModal();
                 });
 
-                // اختيار سبب التقرير
                 document.querySelectorAll('.report-reason').forEach(reason => {
                     reason.addEventListener('click', () => {
                         document.querySelectorAll('.report-reason').forEach(r => r.classList.remove('selected'));
@@ -1311,14 +1409,12 @@
                     });
                 });
 
-                // إغلاق نافذة التقرير عند النقر خارجها
                 this.reportModalEl.addEventListener('click', (e) => {
                     if (e.target === this.reportModalEl) {
                         this.hideReportModal();
                     }
                 });
 
-                // أزرار التحكم مع تحسين اللمس
                 this.startBtnEl.addEventListener('click', (e) => {
                     e.preventDefault();
                     this.startChat();
@@ -1344,7 +1440,6 @@
                     this.toggleCamera();
                 });
 
-                // الدردشة النصية مع تحسين للجوال
                 this.sendBtnEl.addEventListener('click', (e) => {
                     e.preventDefault();
                     this.sendMessage();
@@ -1357,18 +1452,15 @@
                     }
                 });
 
-                // منع السحب للصور والفيديوهات على الجوال
                 this.localVideoEl.addEventListener('dragstart', (e) => e.preventDefault());
                 this.remoteVideoEl.addEventListener('dragstart', (e) => e.preventDefault());
                 
-                // منع القائمة السياقية على الفيديوهات
                 this.localVideoEl.addEventListener('contextmenu', (e) => e.preventDefault());
                 this.remoteVideoEl.addEventListener('contextmenu', (e) => e.preventDefault());
             }
 
             connectToServer() {
                 if (!this.permissionGranted) {
-                    console.log('⏳ انتظار إذن الكاميرا والميكروفون...');
                     return;
                 }
 
@@ -1376,7 +1468,6 @@
                     this.socket = io();
                     
                     this.socket.on('connect', () => {
-                        console.log('✅ متصل بالسيرفر');
                         this.isConnected = true;
                         this.connectionStatusEl.textContent = 'متصل';
                         this.connectionStatusEl.style.color = '#27ae60';
@@ -1384,7 +1475,6 @@
                     });
 
                     this.socket.on('disconnect', () => {
-                        console.log('❌ انقطع الاتصال');
                         this.isConnected = false;
                         this.connectionStatusEl.textContent = 'غير متصل';
                         this.connectionStatusEl.style.color = '#e74c3c';
@@ -1392,38 +1482,32 @@
                     });
 
                     this.socket.on('registration-success', (data) => {
-                        console.log('✅ تم التسجيل بنجاح');
                         this.isRegistered = true;
                         this.userId = data.userId;
                         this.showSuccess(data.message);
                     });
 
                     this.socket.on('registration-error', (data) => {
-                        console.log('❌ خطأ في التسجيل');
                         this.showError(data.message);
                     });
 
                     this.socket.on('waiting-for-partner', (data) => {
-                        console.log('⏳ في انتظار شريك');
                         this.showStatus(`${data.message} (${data.waitingCount} في الانتظار)`);
                         this.remotePlaceholderEl.innerHTML = '<i>⏳</i><span>جاري البحث عن شريك...</span>';
                     });
 
                     this.socket.on('partner-found', (data) => {
-                        console.log('🎉 تم العثور على شريك');
                         this.currentRoom = data.roomId;
                         this.showSuccess(data.message);
                         this.enableChatControls();
                         this.remotePlaceholderEl.innerHTML = '<i>🔄</i><span>جاري الاتصال...</span>';
                         
-                        // تأخير صغير ثم بدء WebRTC
                         setTimeout(() => {
                             this.createAndSendOffer();
                         }, 1000);
                     });
 
                     this.socket.on('partner-left', (data) => {
-                        console.log('👋 غادر الشريك');
                         this.showError(data.message);
                         this.handlePartnerDisconnection();
                     });
@@ -1436,7 +1520,6 @@
                         this.updateStats(stats);
                     });
 
-                    // WebRTC Events
                     this.socket.on('webrtc-offer', (data) => {
                         this.handleWebRTCOffer(data);
                     });
@@ -1454,7 +1537,6 @@
                     });
 
                 } catch (error) {
-                    console.error('❌ خطأ في الاتصال:', error);
                     this.showError('فشل في الاتصال بالسيرفر');
                 }
             }
@@ -1477,7 +1559,6 @@
                 try {
                     this.showStatus('جاري تشغيل الكاميرا والميكروفون...');
                     
-                    // إعدادات مختلفة للجوال والكمبيوتر
                     const isMobile = window.mobileDevice || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
                     
                     const constraints = {
@@ -1495,7 +1576,6 @@
                         }
                     };
                     
-                    // طلب إذن الكاميرا والميكروفون مع الإعدادات المحسنة
                     this.localStream = await navigator.mediaDevices.getUserMedia(constraints);
 
                     this.localVideoEl.srcObject = this.localStream;
@@ -1508,13 +1588,10 @@
                     this.micBtnEl.disabled = false;
                     this.cameraBtnEl.disabled = false;
 
-                    // البحث عن شريك
                     this.socket.emit('find-partner');
                     this.showStatus('جاري البحث عن شريك...');
 
                 } catch (error) {
-                    console.error('❌ خطأ في الوصول للكاميرا:', error);
-                    
                     let errorMessage = 'لا يمكن الوصول للكاميرا أو الميكروفون';
                     
                     if (error.name === 'NotAllowedError') {
@@ -1532,15 +1609,12 @@
             }
 
             findNewPartner() {
-                console.log('🔍 البحث عن شريك جديد...');
                 this.showStatus('جاري البحث عن شريك جديد...');
                 this.remotePlaceholderEl.innerHTML = '<i>⏳</i><span>جاري البحث...</span>';
                 this.remotePlaceholderEl.style.display = 'flex';
                 this.remoteVideoEl.style.display = 'none';
                 
-                // إغلاق الاتصال الحالي
                 if (this.peerConnection) {
-                    console.log('🔌 إغلاق WebRTC الحالي...');
                     this.peerConnection.close();
                     this.peerConnection = null;
                 }
@@ -1571,7 +1645,6 @@
                     });
                 }
                 
-                // تحديث النص حسب حجم الشاشة
                 const isMobile = window.innerWidth <= 768;
                 const micText = isMobile ? 'صوت' : 'الميكروفون';
                 const mutedText = isMobile ? 'كتم' : 'كتم الصوت';
@@ -1596,7 +1669,6 @@
                     });
                 }
                 
-                // تحديث النص حسب حجم الشاشة
                 const isMobile = window.innerWidth <= 768;
                 const cameraText = isMobile ? 'فيديو' : 'الكاميرا';
                 const offText = isMobile ? 'مغلق' : 'إيقاف الكاميرا';
@@ -1680,52 +1752,35 @@
                 this.activeRoomsEl.textContent = stats.activeRooms;
             }
 
-            // WebRTC Functions
             async initializeWebRTC() {
                 try {
-                    console.log('🔄 إنشاء اتصال WebRTC...');
-                    
                     this.peerConnection = new RTCPeerConnection(this.peerConfig);
 
-                    // إضافة الستريم المحلي أولاً
                     if (this.localStream) {
-                        console.log('📹 إضافة الستريم المحلي...');
                         this.localStream.getTracks().forEach(track => {
-                            console.log('🎵 إضافة track:', track.kind);
                             this.peerConnection.addTrack(track, this.localStream);
                         });
                     }
 
-                    // معالجة الستريم البعيد
                     this.peerConnection.ontrack = (event) => {
-                        console.log('📺 تم استقبال الستريم البعيد:', event.streams.length);
                         if (event.streams && event.streams[0]) {
-                            console.log('🎥 عرض فيديو الشريك...');
                             this.remoteVideoEl.srcObject = event.streams[0];
                             this.remoteVideoEl.style.display = 'block';
                             this.remotePlaceholderEl.style.display = 'none';
                             
-                            // التأكد من تشغيل الفيديو
-                            this.remoteVideoEl.play().catch(e => {
-                                console.log('⚠️ تحذير تشغيل الفيديو:', e);
-                            });
+                            this.remoteVideoEl.play().catch(e => {});
                         }
                     };
 
-                    // معالجة ICE candidates
                     this.peerConnection.onicecandidate = (event) => {
                         if (event.candidate) {
-                            console.log('🧊 إرسال ICE candidate');
                             this.socket.emit('webrtc-ice-candidate', {
                                 candidate: event.candidate
                             });
                         }
                     };
 
-                    // معالجة تغيير حالة الاتصال
                     this.peerConnection.onconnectionstatechange = () => {
-                        console.log('🔗 حالة الاتصال:', this.peerConnection.connectionState);
-                        
                         if (this.peerConnection.connectionState === 'connected') {
                             this.showSuccess('تم الاتصال بالشريك بنجاح! 🎉');
                         } else if (this.peerConnection.connectionState === 'disconnected') {
@@ -1736,57 +1791,37 @@
                         }
                     };
 
-                    // معالجة حالة ICE
-                    this.peerConnection.oniceconnectionstatechange = () => {
-                        console.log('🧊 حالة ICE:', this.peerConnection.iceConnectionState);
-                    };
-
-                    console.log('✅ تم إعداد WebRTC بنجاح');
+                    this.peerConnection.oniceconnectionstatechange = () => {};
 
                 } catch (error) {
-                    console.error('❌ خطأ في WebRTC:', error);
                     this.showError('خطأ في إعداد الاتصال المرئي');
                 }
             }
 
             async handleWebRTCOffer(data) {
                 try {
-                    console.log('📞 استقبال عرض WebRTC من:', data.senderId);
-                    
                     if (!this.peerConnection) {
-                        console.log('🔄 إنشاء WebRTC جديد للاستقبال...');
                         await this.initializeWebRTC();
                     }
 
-                    // تعيين الوصف البعيد
                     await this.peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
-                    console.log('✅ تم تعيين Remote Description');
 
-                    // إنشاء الإجابة
                     const answer = await this.peerConnection.createAnswer();
                     await this.peerConnection.setLocalDescription(answer);
-                    console.log('✅ تم إنشاء الإجابة');
                     
-                    // إرسال الإجابة
                     this.socket.emit('webrtc-answer', { answer });
-                    console.log('📤 تم إرسال الإجابة');
 
                 } catch (error) {
-                    console.error('❌ خطأ في معالجة WebRTC offer:', error);
                     this.showError('خطأ في استقبال المكالمة');
                 }
             }
 
             async handleWebRTCAnswer(data) {
                 try {
-                    console.log('📞 استقبال إجابة WebRTC من:', data.senderId);
-                    
                     if (this.peerConnection && data.answer) {
                         await this.peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
-                        console.log('✅ تم تعيين Remote Description للإجابة');
                     }
                 } catch (error) {
-                    console.error('❌ خطأ في معالجة WebRTC answer:', error);
                     this.showError('خطأ في استقبال الإجابة');
                 }
             }
@@ -1795,12 +1830,8 @@
                 try {
                     if (this.peerConnection && data.candidate) {
                         await this.peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
-                        console.log('🧊 تم إضافة ICE candidate');
                     }
-                } catch (error) {
-                    console.error('❌ خطأ في معالجة ICE candidate:', error);
-                    // لا نظهر خطأ للمستخدم هنا لأنه طبيعي أحياناً
-                }
+                } catch (error) {}
             }
 
             async createAndSendOffer() {
@@ -1808,42 +1839,30 @@
                     if (!this.peerConnection) {
                         await this.initializeWebRTC();
                     }
-
-                    console.log('📞 إنشاء عرض WebRTC...');
                     
-                    // إنشاء العرض
                     const offer = await this.peerConnection.createOffer({
                         offerToReceiveAudio: true,
                         offerToReceiveVideo: true
                     });
                     
                     await this.peerConnection.setLocalDescription(offer);
-                    console.log('✅ تم إنشاء العرض');
                     
-                    // إرسال العرض
                     this.socket.emit('webrtc-offer', { offer });
-                    console.log('📤 تم إرسال العرض');
 
                 } catch (error) {
-                    console.error('❌ خطأ في إنشاء العرض:', error);
                     this.showError('خطأ في بدء المكالمة');
                 }
             }
 
-            // وظائف مساعدة للمطورين
             resetInstagramPopup() {
-                localStorage.removeItem('khambaqah_instagram_shown');
-                console.log('✅ تم إعادة تعيين نافذة الانستقرام - ستظهر في الزيارة القادمة');
+                sessionStorage.removeItem('khambaqah_instagram_shown');
             }
 
             forceShowInstagram() {
                 this.showInstagramPopup();
-                console.log('📸 تم إظهار نافذة الانستقرام بالقوة');
             }
 
             retryConnection() {
-                console.log('🔄 إعادة محاولة الاتصال...');
-                
                 setTimeout(() => {
                     if (this.currentRoom && this.localStream) {
                         this.createAndSendOffer();
@@ -1851,7 +1870,6 @@
                 }, 2000);
             }
 
-            // وظائف الأمان
             showReportModal() {
                 if (!this.currentRoom) {
                     this.showError('يجب أن تكون في محادثة لتقديم تقرير');
@@ -1861,7 +1879,6 @@
                 this.reportModalEl.style.display = 'flex';
                 this.warningBannerEl.style.display = 'block';
                 
-                // مسح التحديد السابق
                 document.querySelectorAll('.report-reason').forEach(r => {
                     r.classList.remove('selected');
                     r.querySelector('input').checked = false;
@@ -1894,8 +1911,6 @@
                     this.addMessage('تم إرسال التقرير بنجاح ✅ سيتم مراجعته خلال 24 ساعة', 'system');
                     this.hideReportModal();
                     
-                    console.log('🚨 تم إرسال تقرير:', reportData.reason);
-                    
                     setTimeout(() => {
                         this.addMessage('شكراً لمساعدتك في جعل خمبقه مكاناً آمناً للجميع 🛡️', 'system');
                     }, 2000);
@@ -1920,13 +1935,12 @@
                 }
             }
 
-            // تذكيرات الأمان
             startSafetyReminders() {
                 setInterval(() => {
                     if (this.currentRoom) {
                         this.showSafetyReminder();
                     }
-                }, 10 * 60 * 1000); // كل 10 دقائق
+                }, 10 * 60 * 1000);
             }
 
             showSafetyReminder() {
@@ -1943,19 +1957,16 @@
             }
 
             cleanup() {
-                // إيقاف WebRTC
                 if (this.peerConnection) {
                     this.peerConnection.close();
                     this.peerConnection = null;
                 }
 
-                // إيقاف الفيديو المحلي
                 if (this.localStream) {
                     this.localStream.getTracks().forEach(track => track.stop());
                     this.localStream = null;
                 }
 
-                // إخفاء الفيديوهات
                 this.localVideoEl.style.display = 'none';
                 this.remoteVideoEl.style.display = 'none';
                 this.localPlaceholderEl.style.display = 'flex';
@@ -1964,13 +1975,11 @@
             }
 
             handlePartnerDisconnection() {
-                // إيقاف WebRTC
                 if (this.peerConnection) {
                     this.peerConnection.close();
                     this.peerConnection = null;
                 }
 
-                // إخفاء فيديو الشريك
                 this.remoteVideoEl.style.display = 'none';
                 this.remotePlaceholderEl.style.display = 'flex';
                 this.currentRoom = null;
@@ -1989,9 +1998,7 @@
             }
         }
 
-        // تشغيل التطبيق مع تحسينات الجوال
         document.addEventListener('DOMContentLoaded', () => {
-            // منع الزوم المزدوج على iOS
             let lastTouchEnd = 0;
             document.addEventListener('touchend', function (event) {
                 const now = (new Date()).getTime();
@@ -2001,21 +2008,17 @@
                 lastTouchEnd = now;
             }, false);
 
-            // منع السحب والإفلات على الجوال
             document.addEventListener('touchmove', function(e) {
                 if (e.target.tagName === 'VIDEO' || e.target.closest('.video-container')) {
                     e.preventDefault();
                 }
             }, { passive: false });
 
-            // تحسين الأداء للجوال
             if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-                // تقليل جودة الفيديو للجوال لتحسين الأداء
                 window.mobileDevice = true;
                 document.body.classList.add('mobile-device');
             }
 
-            // إنشاء التطبيق وحفظه كمتغير عام
             window.app = new ChatLivePro();
         });
     </script>
