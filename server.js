@@ -48,7 +48,7 @@ app.get('/', (req, res) => {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>ChatLive Pro Server</title>
+        <title>خمبقه - سيرفر الدردشة المرئية</title>
         <style>
             body {
                 font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -133,7 +133,7 @@ app.get('/', (req, res) => {
     <body>
         <div class="container">
             <div class="status">🟢 السيرفر نشط</div>
-            <h1>🚀 ChatLive Pro</h1>
+            <h1>🚀 خمبقه</h1>
             <p style="font-size: 1.2em; margin-bottom: 30px;">منصة الدردشة المرئية الاحترافية</p>
             
             <div class="stats">
@@ -163,6 +163,7 @@ app.get('/', (req, res) => {
             <div class="footer">
                 <p>تم التطوير بـ ❤️ | Node.js + Socket.io</p>
                 <p>الإصدار: 1.0.0 | البيئة: ${process.env.NODE_ENV || 'development'}</p>
+                <p><strong>خمبقه</strong> - أفضل منصة دردشة مرئية في الوطن العربي</p>
             </div>
         </div>
     </body>
@@ -603,7 +604,7 @@ const HOST = '0.0.0.0'; // مهم جداً للعمل على Render
 
 server.listen(PORT, HOST, () => {
     console.log('🚀═══════════════════════════════════════════════════════════════🚀');
-    console.log('                     ChatLive Pro Server                          ');
+    console.log('                           خمبقه Server                              ');
     console.log('🚀═══════════════════════════════════════════════════════════════🚀');
     console.log(`🌐 السيرفر يعمل على: http://${HOST}:${PORT}`);
     console.log(`📊 مراقبة الصحة: http://${HOST}:${PORT}/health`);
