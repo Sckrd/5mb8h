@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>خمبقه</title>
+    <title>خمبقه - دردشة فيديو مباشرة</title>
     <style>
         * {
             margin: 0;
@@ -313,6 +313,84 @@
             animation: pulse 2s infinite;
         }
 
+        .permission-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .permission-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .permission-content h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+
+        .permission-content p {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+
+        .permission-icon {
+            font-size: 5em;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+
+        .permission-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .permission-btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+
+        .permission-btn.allow {
+            background: #27ae60;
+            color: white;
+        }
+
+        .permission-btn.allow:hover {
+            background: #229954;
+            transform: translateY(-2px);
+        }
+
+        .permission-btn.deny {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .permission-btn.deny:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+
         @keyframes pulse {
             0% { transform: scale(1); }
             50% { transform: scale(1.05); }
@@ -337,11 +415,39 @@
                 padding: 10px 16px;
                 font-size: 0.9em;
             }
+
+            .permission-content {
+                padding: 30px 20px;
+            }
+
+            .permission-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- نافذة طلب الإذن -->
+        <div id="permissionModal" class="permission-modal">
+            <div class="permission-content">
+                <div class="permission-icon">🎥📱</div>
+                <h2>مرحباً في خمبقه!</h2>
+                <p>نحتاج إلى إذنك للوصول إلى الكاميرا والميكروفون لبدء الدردشة المرئية.</p>
+                <p><strong>خصوصيتك مهمة لنا:</strong><br>
+                لن نحفظ أو نسجل أي محتوى من الكاميرا أو الميكروفون.</p>
+                <div class="permission-buttons">
+                    <button id="allowPermission" class="permission-btn allow">
+                        ✅ السماح والبدء
+                    </button>
+                    <button id="denyPermission" class="permission-btn deny">
+                        ❌ رفض
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <div class="header">
             <h1>🎥 خمبقه</h1>
             <p>منصة الدردشة المرئية الاحترافية - تواصل مع أشخاص جدد من حول العالم</p>
@@ -444,7 +550,8 @@
                 <div class="chat-section">
                     <h3>💬 الدردشة النصية</h3>
                     <div id="chatMessages" class="chat-messages">
-                        <div class="message system">أهلاً بك في ChatLive Pro! 🎉</div>
+                        <div class="message system">أهلاً بك في خمبقه! 🎉</div>
+                        <div class="message system">يرجى السماح للوصول إلى الكاميرا والميكروفون 📹🎤</div>
                     </div>
                     <div class="chat-input">
                         <input type="text" id="messageInput" placeholder="اكتب رسالتك..." disabled>
@@ -477,6 +584,11 @@
                 this.sendBtnEl = document.getElementById('sendBtn');
                 this.countrySelectEl = document.getElementById('countrySelect');
                 
+                // عناصر طلب الإذن
+                this.permissionModalEl = document.getElementById('permissionModal');
+                this.allowPermissionEl = document.getElementById('allowPermission');
+                this.denyPermissionEl = document.getElementById('denyPermission');
+                
                 // عناصر الإحصائيات
                 this.activeUsersEl = document.getElementById('activeUsers');
                 this.waitingUsersEl = document.getElementById('waitingUsers');
@@ -493,6 +605,7 @@
                 this.currentRoom = null;
                 this.micEnabled = true;
                 this.cameraEnabled = true;
+                this.permissionGranted = false;
 
                 // إعداد WebRTC
                 this.peerConfig = {
@@ -507,10 +620,82 @@
 
             init() {
                 this.setupEventListeners();
-                this.connectToServer();
+                this.showPermissionModal();
+            }
+
+            showPermissionModal() {
+                this.permissionModalEl.style.display = 'flex';
+                
+                // إخفاء المحتوى الرئيسي حتى يتم منح الإذن
+                document.querySelector('.main-content').style.filter = 'blur(5px)';
+                document.querySelector('.header').style.filter = 'blur(5px)';
+            }
+
+            hidePermissionModal() {
+                this.permissionModalEl.style.display = 'none';
+                document.querySelector('.main-content').style.filter = 'none';
+                document.querySelector('.header').style.filter = 'none';
+            }
+
+            async requestPermissions() {
+                try {
+                    console.log('🎥 طلب إذن الكاميرا والميكروفون...');
+                    
+                    // طلب إذن الكاميرا والميكروفون
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        video: true,
+                        audio: true
+                    });
+                    
+                    // إيقاف الستريم مؤقتاً (سنستخدمه لاحقاً)
+                    stream.getTracks().forEach(track => track.stop());
+                    
+                    this.permissionGranted = true;
+                    this.hidePermissionModal();
+                    this.connectToServer();
+                    
+                    this.addMessage('تم منح الإذن بنجاح! ✅', 'system');
+                    this.addMessage('يمكنك الآن بدء الدردشة المرئية 🎥', 'system');
+                    
+                    return true;
+                    
+                } catch (error) {
+                    console.error('❌ تم رفض الإذن:', error);
+                    
+                    let errorMessage = 'تم رفض الإذن للكاميرا والميكروفون';
+                    
+                    if (error.name === 'NotAllowedError') {
+                        errorMessage = 'يجب السماح للوصول إلى الكاميرا والميكروفون لاستخدام خمبقه';
+                    } else if (error.name === 'NotFoundError') {
+                        errorMessage = 'لم يتم العثور على كاميرا أو ميكروفون';
+                    } else if (error.name === 'NotReadableError') {
+                        errorMessage = 'الكاميرا أو الميكروفون مستخدم من تطبيق آخر';
+                    }
+                    
+                    alert(`❌ ${errorMessage}\n\nيرجى:\n• السماح للوصول في المتصفح\n• التأكد من وجود كاميرا وميكروفون\n• إغلاق التطبيقات الأخرى التي تستخدم الكاميرا`);
+                    
+                    return false;
+                }
             }
 
             setupEventListeners() {
+                // أزرار طلب الإذن
+                this.allowPermissionEl.addEventListener('click', async () => {
+                    this.allowPermissionEl.disabled = true;
+                    this.allowPermissionEl.textContent = '⏳ جاري طلب الإذن...';
+                    
+                    const granted = await this.requestPermissions();
+                    
+                    if (!granted) {
+                        this.allowPermissionEl.disabled = false;
+                        this.allowPermissionEl.textContent = '✅ السماح والبدء';
+                    }
+                });
+                
+                this.denyPermissionEl.addEventListener('click', () => {
+                    alert('❌ لا يمكن استخدام خمبقه بدون إذن الكاميرا والميكروفون');
+                });
+
                 // أزرار التحكم
                 this.startBtnEl.addEventListener('click', () => this.startChat());
                 this.nextBtnEl.addEventListener('click', () => this.findNewPartner());
@@ -526,6 +711,11 @@
             }
 
             connectToServer() {
+                if (!this.permissionGranted) {
+                    console.log('⏳ انتظار إذن الكاميرا والميكروفون...');
+                    return;
+                }
+
                 try {
                     this.socket = io();
                     
@@ -619,10 +809,15 @@
             }
 
             async startChat() {
+                if (!this.permissionGranted) {
+                    this.showError('يجب السماح للكاميرا والميكروفون أولاً');
+                    return;
+                }
+
                 try {
                     this.showStatus('جاري تشغيل الكاميرا والميكروفون...');
                     
-                    // طلب إذن الكاميرا والميكروفون
+                    // طلب إذن الكاميرا والميكروفون مرة أخرى للتأكد
                     this.localStream = await navigator.mediaDevices.getUserMedia({
                         video: true,
                         audio: true
@@ -822,4 +1017,82 @@
 
                     await this.peerConnection.setRemoteDescription(data.offer);
                     const answer = await this.peerConnection.createAnswer();
-                    await this.peerConnection.setLocal
+                    await this.peerConnection.setLocalDescription(answer);
+                    
+                    this.socket.emit('webrtc-answer', { answer });
+
+                } catch (error) {
+                    console.error('❌ خطأ في معالجة WebRTC offer:', error);
+                }
+            }
+
+            async handleWebRTCAnswer(data) {
+                try {
+                    await this.peerConnection.setRemoteDescription(data.answer);
+                } catch (error) {
+                    console.error('❌ خطأ في معالجة WebRTC answer:', error);
+                }
+            }
+
+            async handleWebRTCIceCandidate(data) {
+                try {
+                    await this.peerConnection.addIceCandidate(data.candidate);
+                } catch (error) {
+                    console.error('❌ خطأ في معالجة ICE candidate:', error);
+                }
+            }
+
+            cleanup() {
+                // إيقاف WebRTC
+                if (this.peerConnection) {
+                    this.peerConnection.close();
+                    this.peerConnection = null;
+                }
+
+                // إيقاف الفيديو المحلي
+                if (this.localStream) {
+                    this.localStream.getTracks().forEach(track => track.stop());
+                    this.localStream = null;
+                }
+
+                // إخفاء الفيديوهات
+                this.localVideoEl.style.display = 'none';
+                this.remoteVideoEl.style.display = 'none';
+                this.localPlaceholderEl.style.display = 'flex';
+                this.remotePlaceholderEl.style.display = 'flex';
+                this.currentRoom = null;
+            }
+
+            handlePartnerDisconnection() {
+                // إيقاف WebRTC
+                if (this.peerConnection) {
+                    this.peerConnection.close();
+                    this.peerConnection = null;
+                }
+
+                // إخفاء فيديو الشريك
+                this.remoteVideoEl.style.display = 'none';
+                this.remotePlaceholderEl.style.display = 'flex';
+                this.currentRoom = null;
+                this.disableChatControls();
+            }
+
+            handleDisconnection() {
+                this.cleanup();
+                this.isConnected = false;
+                this.isRegistered = false;
+                this.userId = null;
+                this.startBtnEl.disabled = false;
+                this.nextBtnEl.disabled = true;
+                this.stopBtnEl.disabled = true;
+                this.disableChatControls();
+            }
+        }
+
+        // تشغيل التطبيق
+        document.addEventListener('DOMContentLoaded', () => {
+            new ChatLivePro();
+        });
+    </script>
+</body>
+</html>
