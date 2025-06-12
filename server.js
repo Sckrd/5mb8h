@@ -600,7 +600,7 @@ process.on('SIGINT', () => {
 
 // تشغيل السيرفر
 const PORT = process.env.PORT || 3001;
-const HOST = '0.0.0.0'; // مهم جداً للعمل على Render
+const HOST = '0.0.0.0';
 
 server.listen(PORT, HOST, () => {
     console.log('🚀═══════════════════════════════════════════════════════════════🚀');
