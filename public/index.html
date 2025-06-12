@@ -911,58 +911,6 @@
             </div>
         </div>
 
-        <!-- نافذة التقارير -->
-        <div id="reportModal" class="report-modal" style="display: none;">
-            <div class="report-content">
-                <h3>🚨 الإبلاغ عن مخالفة</h3>
-                
-                <div class="warning-banner" id="warningBanner">
-                    ⚠️ تحذير: يمكنك الإبلاغ عن أي سلوك غير لائق
-                </div>
-                
-                <p>اختر سبب الإبلاغ:</p>
-                
-                <div class="report-reasons">
-                    <label class="report-reason" data-reason="inappropriate_content">
-                        <input type="radio" name="reportReason" value="inappropriate_content" style="margin-left: 8px;">
-                        🔞 محتوى غير لائق
-                    </label>
-                    
-                    <label class="report-reason" data-reason="harassment">
-                        <input type="radio" name="reportReason" value="harassment" style="margin-left: 8px;">
-                        😡 تحرش أو إزعاج
-                    </label>
-                    
-                    <label class="report-reason" data-reason="spam">
-                        <input type="radio" name="reportReason" value="spam" style="margin-left: 8px;">
-                        📧 رسائل مزعجة
-                    </label>
-                    
-                    <label class="report-reason" data-reason="fake_profile">
-                        <input type="radio" name="reportReason" value="fake_profile" style="margin-left: 8px;">
-                        👤 هوية مزيفة
-                    </label>
-                    
-                    <label class="report-reason" data-reason="violence">
-                        <input type="radio" name="reportReason" value="violence" style="margin-left: 8px;">
-                        ⚡ عنف أو تهديد
-                    </label>
-                    
-                    <label class="report-reason" data-reason="other">
-                        <input type="radio" name="reportReason" value="other" style="margin-left: 8px;">
-                        📝 أخرى
-                    </label>
-                </div>
-                
-                <textarea id="reportDetails" class="report-textarea" placeholder="تفاصيل إضافية (اختياري)..."></textarea>
-                
-                <div class="report-buttons">
-                    <button id="sendReportBtn" class="report-btn send">🚨 إرسال التقرير</button>
-                    <button id="cancelReportBtn" class="report-btn cancel">❌ إلغاء</button>
-                </div>
-            </div>
-        </div>
-
         <div class="header">
             <h1>🎥 خمبقه</h1>
             <p>منصة الدردشة المرئية الاحترافية - تواصل مع أشخاص جدد من حول العالم</p>
@@ -1004,15 +952,6 @@
                     </button>
                     <button id="cameraBtn" class="control-btn" disabled>
                         📹 <span class="desktop-text">الكاميرا</span><span class="mobile-text">فيديو</span>
-                    </button>
-                </div>
-
-                <div class="safety-controls">
-                    <button id="reportBtn" class="safety-btn">
-                        🚨 إبلاغ
-                    </button>
-                    <button id="blockBtn" class="safety-btn">
-                        🚫 حظر
                     </button>
                 </div>
 
@@ -1126,15 +1065,6 @@
                 this.activeRoomsEl = document.getElementById('activeRooms');
                 this.connectionStatusEl = document.getElementById('connectionStatus');
 
-                // عناصر الأمان
-                this.reportModalEl = document.getElementById('reportModal');
-                this.reportBtnEl = document.getElementById('reportBtn');
-                this.blockBtnEl = document.getElementById('blockBtn');
-                this.sendReportBtnEl = document.getElementById('sendReportBtn');
-                this.cancelReportBtnEl = document.getElementById('cancelReportBtn');
-                this.reportDetailsEl = document.getElementById('reportDetails');
-                this.warningBannerEl = document.getElementById('warningBanner');
-
                 // متغيرات الحالة
                 this.socket = null;
                 this.localStream = null;
@@ -1166,7 +1096,6 @@
                 this.setupEventListeners();
                 this.checkInstagramPopup();
                 this.showPermissionModal();
-                this.startSafetyReminders();
             }
 
             checkInstagramPopup() {
@@ -1283,39 +1212,6 @@
 
                 this.closeInstagramBtnEl.addEventListener('click', () => {
                     this.hideInstagramPopup();
-                });
-
-                // أزرار الأمان
-                this.reportBtnEl.addEventListener('click', () => {
-                    this.showReportModal();
-                });
-
-                this.blockBtnEl.addEventListener('click', () => {
-                    this.blockUser();
-                });
-
-                this.sendReportBtnEl.addEventListener('click', () => {
-                    this.sendReport();
-                });
-
-                this.cancelReportBtnEl.addEventListener('click', () => {
-                    this.hideReportModal();
-                });
-
-                // اختيار سبب التقرير
-                document.querySelectorAll('.report-reason').forEach(reason => {
-                    reason.addEventListener('click', () => {
-                        document.querySelectorAll('.report-reason').forEach(r => r.classList.remove('selected'));
-                        reason.classList.add('selected');
-                        reason.querySelector('input').checked = true;
-                    });
-                });
-
-                // إغلاق نافذة التقرير عند النقر خارجها
-                this.reportModalEl.addEventListener('click', (e) => {
-                    if (e.target === this.reportModalEl) {
-                        this.hideReportModal();
-                    }
                 });
 
                 // أزرار التحكم مع تحسين اللمس
@@ -1663,15 +1559,11 @@
             enableChatControls() {
                 this.messageInputEl.disabled = false;
                 this.sendBtnEl.disabled = false;
-                this.reportBtnEl.disabled = false;
-                this.blockBtnEl.disabled = false;
             }
 
             disableChatControls() {
                 this.messageInputEl.disabled = true;
                 this.sendBtnEl.disabled = true;
-                this.reportBtnEl.disabled = true;
-                this.blockBtnEl.disabled = true;
             }
 
             updateStats(stats) {
@@ -1849,97 +1741,6 @@
                         this.createAndSendOffer();
                     }
                 }, 2000);
-            }
-
-            // وظائف الأمان
-            showReportModal() {
-                if (!this.currentRoom) {
-                    this.showError('يجب أن تكون في محادثة لتقديم تقرير');
-                    return;
-                }
-                
-                this.reportModalEl.style.display = 'flex';
-                this.warningBannerEl.style.display = 'block';
-                
-                // مسح التحديد السابق
-                document.querySelectorAll('.report-reason').forEach(r => {
-                    r.classList.remove('selected');
-                    r.querySelector('input').checked = false;
-                });
-                this.reportDetailsEl.value = '';
-            }
-
-            hideReportModal() {
-                this.reportModalEl.style.display = 'none';
-            }
-
-            sendReport() {
-                const selectedReason = document.querySelector('input[name="reportReason"]:checked');
-                
-                if (!selectedReason) {
-                    alert('يرجى اختيار سبب التقرير');
-                    return;
-                }
-                
-                const reportData = {
-                    reason: selectedReason.value,
-                    details: this.reportDetailsEl.value.trim(),
-                    timestamp: new Date().toISOString(),
-                    sessionId: this.currentRoom,
-                    reporterCountry: this.countrySelectEl.value
-                };
-                
-                if (this.socket && this.currentRoom) {
-                    this.socket.emit('submit-report', reportData);
-                    this.addMessage('تم إرسال التقرير بنجاح ✅ سيتم مراجعته خلال 24 ساعة', 'system');
-                    this.hideReportModal();
-                    
-                    console.log('🚨 تم إرسال تقرير:', reportData.reason);
-                    
-                    setTimeout(() => {
-                        this.addMessage('شكراً لمساعدتك في جعل خمبقه مكاناً آمناً للجميع 🛡️', 'system');
-                    }, 2000);
-                } else {
-                    alert('لا يمكن إرسال التقرير حالياً');
-                }
-            }
-
-            blockUser() {
-                if (!this.currentRoom) {
-                    this.showError('يجب أن تكون في محادثة لحظر مستخدم');
-                    return;
-                }
-
-                if (confirm('هل أنت متأكد من حظر هذا المستخدم؟\nسيتم قطع الاتصال والانتقال لشريك جديد')) {
-                    this.socket.emit('block-user', { roomId: this.currentRoom });
-                    this.addMessage('تم حظر المستخدم ✅ جاري البحث عن شريك جديد...', 'system');
-                    
-                    setTimeout(() => {
-                        this.findNewPartner();
-                    }, 2000);
-                }
-            }
-
-            // تذكيرات الأمان
-            startSafetyReminders() {
-                setInterval(() => {
-                    if (this.currentRoom) {
-                        this.showSafetyReminder();
-                    }
-                }, 10 * 60 * 1000); // كل 10 دقائق
-            }
-
-            showSafetyReminder() {
-                const reminders = [
-                    'تذكير: لا تشارك معلوماتك الشخصية 🔒',
-                    'للأمان: يمكنك الإبلاغ عن أي سلوك غير لائق 🚨',
-                    'نصيحة: تصرف بأدب واحترم الآخرين 😊',
-                    'تذكير: خصوصيتك مهمة - لا نسجل أي شيء 🛡️',
-                    'نصيحة: تجنب النقر على روابط مشبوهة 🔗'
-                ];
-                
-                const randomReminder = reminders[Math.floor(Math.random() * reminders.length)];
-                this.addMessage(randomReminder, 'system');
             }
 
             cleanup() {
