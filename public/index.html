@@ -905,4 +905,809 @@
                         <option value="JO">🇯🇴 الأردن</option>
                         <option value="LB">🇱🇧 لبنان</option>
                         <option value="SY">🇸🇾 سوريا</option>
-                        <option value="IQ">
+                        <option value="IQ">🇮🇶 العراق</option>
+                        <option value="KW">🇰🇼 الكويت</option>
+                        <option value="BH">🇧🇭 البحرين</option>
+                        <option value="QA">🇶🇦 قطر</option>
+                        <option value="OM">🇴🇲 عُمان</option>
+                        <option value="YE">🇾🇪 اليمن</option>
+                        <option value="MA">🇲🇦 المغرب</option>
+                        <option value="DZ">🇩🇿 الجزائر</option>
+                        <option value="TN">🇹🇳 تونس</option>
+                        <option value="LY">🇱🇾 ليبيا</option>
+                        <option value="SD">🇸🇩 السودان</option>
+                        <option value="SO">🇸🇴 الصومال</option>
+                        <option value="DJ">🇩🇯 جيبوتي</option>
+                        <option value="KM">🇰🇲 جزر القمر</option>
+                        <option value="MR">🇲🇷 موريتانيا</option>
+                        <option value="PS">🇵🇸 فلسطين</option>
+                        <option value="OTHER">🌍 أخرى</option>
+                    </select>
+                </div>
+
+                <div class="chat-section">
+                    <h3>💬 الدردشة النصية</h3>
+                    <div id="chatMessages" class="chat-messages">
+                        <div class="message system">أهلاً بك في خمبقه! 🎉</div>
+                        <div class="message system">يرجى السماح للوصول إلى الكاميرا والميكروفون 📹🎤</div>
+                        <div class="message system">💡 نصيحة: تأكد من أن كاميرتك تعمل قبل البدء</div>
+                        <div class="message system">📸 تابعنا على <span style="cursor: pointer; color: #dc2743; text-decoration: underline;" onclick="window.app.showInstagramPopup()">انستقرام @528728_</span></div>
+                    </div>
+                    <div class="chat-input">
+                        <input type="text" id="messageInput" placeholder="اكتب رسالتك..." disabled>
+                        <button id="sendBtn" disabled>إرسال</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class ChatLivePro {
+            constructor() {
+                // DOM Elements
+                this.startBtnEl = document.getElementById('startBtn');
+                this.nextBtnEl = document.getElementById('nextBtn');
+                this.stopBtnEl = document.getElementById('stopBtn');
+                this.micBtnEl = document.getElementById('micBtn');
+                this.cameraBtnEl = document.getElementById('cameraBtn');
+                this.statusDivEl = document.getElementById('statusDiv');
+                this.localVideoEl = document.getElementById('localVideo');
+                this.remoteVideoEl = document.getElementById('remoteVideo');
+                this.localPlaceholderEl = document.getElementById('localPlaceholder');
+                this.remotePlaceholderEl = document.getElementById('remotePlaceholder');
+                this.chatMessagesEl = document.getElementById('chatMessages');
+                this.messageInputEl = document.getElementById('messageInput');
+                this.sendBtnEl = document.getElementById('sendBtn');
+                this.countrySelectEl = document.getElementById('countrySelect');
+                
+                // Permission Modal Elements
+                this.permissionModalEl = document.getElementById('permissionModal');
+                this.allowPermissionEl = document.getElementById('allowPermission');
+                this.denyPermissionEl = document.getElementById('denyPermission');
+                
+                // Instagram Modal Elements
+                this.instagramModalEl = document.getElementById('instagramModal');
+                this.followBtnEl = document.getElementById('followBtn');
+                this.closeInstagramBtnEl = document.getElementById('closeInstagramBtn');
+                
+                // Statistics Elements
+                this.activeUsersEl = document.getElementById('activeUsers');
+                this.waitingUsersEl = document.getElementById('waitingUsers');
+                this.activeRoomsEl = document.getElementById('activeRooms');
+                this.connectionStatusEl = document.getElementById('connectionStatus');
+
+                // Safety Elements
+                this.reportModalEl = document.getElementById('reportModal');
+                this.blockModalEl = document.getElementById('blockModal');
+                this.reportBtnEl = document.getElementById('reportBtn');
+                this.blockBtnEl = document.getElementById('blockBtn');
+                this.sendReportBtnEl = document.getElementById('sendReportBtn');
+                this.cancelReportBtnEl = document.getElementById('cancelReportBtn');
+                this.confirmBlockBtnEl = document.getElementById('confirmBlockBtn');
+                this.cancelBlockBtnEl = document.getElementById('cancelBlockBtn');
+                this.reportDetailsEl = document.getElementById('reportDetails');
+                this.warningBannerEl = document.getElementById('warningBanner');
+
+                // State Variables
+                this.socket = null;
+                this.localStream = null;
+                this.peerConnection = null;
+                this.isConnected = false;
+                this.isRegistered = false;
+                this.userId = null;
+                this.currentRoom = null;
+                this.micEnabled = true;
+                this.cameraEnabled = true;
+                this.permissionGranted = false;
+
+                // Enhanced WebRTC Configuration
+                this.peerConfig = {
+                    iceServers: [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' },
+                        { urls: 'stun:stun2.l.google.com:19302' },
+                        { urls: 'stun:stun3.l.google.com:19302' },
+                        { urls: 'stun:stun4.l.google.com:19302' }
+                    ],
+                    iceCandidatePoolSize: 10
+                };
+
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.checkInstagramPopup();
+                this.showPermissionModal();
+                this.startSafetyReminders();
+                this.simulateStats(); // For demo purposes
+            }
+
+            // For demo purposes - simulate server stats
+            simulateStats() {
+                const updateStats = () => {
+                    this.updateStats({
+                        activeUsers: Math.floor(Math.random() * 500) + 100,
+                        waitingUsers: Math.floor(Math.random() * 50) + 5,
+                        activeRooms: Math.floor(Math.random() * 200) + 50
+                    });
+                };
+                
+                updateStats();
+                setInterval(updateStats, 5000);
+            }
+
+            checkInstagramPopup() {
+                const instagramShown = localStorage.getItem('khambaqah_instagram_shown');
+                
+                if (!instagramShown) {
+                    setTimeout(() => {
+                        this.showInstagramPopup();
+                    }, 3000);
+                }
+            }
+
+            showInstagramPopup() {
+                this.instagramModalEl.style.display = 'flex';
+                localStorage.setItem('khambaqah_instagram_shown', 'true');
+                
+                setTimeout(() => {
+                    this.hideInstagramPopup();
+                }, 15000);
+            }
+
+            hideInstagramPopup() {
+                this.instagramModalEl.style.display = 'none';
+            }
+
+            showPermissionModal() {
+                this.permissionModalEl.style.display = 'flex';
+                document.querySelector('.main-content').style.filter = 'blur(5px)';
+                document.querySelector('.header').style.filter = 'blur(5px)';
+            }
+
+            hidePermissionModal() {
+                this.permissionModalEl.style.display = 'none';
+                document.querySelector('.main-content').style.filter = 'none';
+                document.querySelector('.header').style.filter = 'none';
+            }
+
+            async requestPermissions() {
+                try {
+                    console.log('🎥 Requesting camera and microphone permissions...');
+                    
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        video: true,
+                        audio: true
+                    });
+                    
+                    stream.getTracks().forEach(track => track.stop());
+                    
+                    this.permissionGranted = true;
+                    this.hidePermissionModal();
+                    this.simulateConnection(); // For demo
+                    
+                    this.addMessage('تم منح الإذن بنجاح! ✅', 'system');
+                    this.addMessage('يمكنك الآن بدء الدردشة المرئية 🎥', 'system');
+                    
+                    return true;
+                    
+                } catch (error) {
+                    console.error('❌ Permission denied:', error);
+                    
+                    let errorMessage = 'تم رفض الإذن للكاميرا والميكروفون';
+                    
+                    if (error.name === 'NotAllowedError') {
+                        errorMessage = 'يجب السماح للوصول إلى الكاميرا والميكروفون لاستخدام خمبقه';
+                    } else if (error.name === 'NotFoundError') {
+                        errorMessage = 'لم يتم العثور على كاميرا أو ميكروفون';
+                    } else if (error.name === 'NotReadableError') {
+                        errorMessage = 'الكاميرا أو الميكروفون مستخدم من تطبيق آخر';
+                    }
+                    
+                    alert(`❌ ${errorMessage}\n\nيرجى:\n• السماح للوصول في المتصفح\n• التأكد من وجود كاميرا وميكروفون\n• إغلاق التطبيقات الأخرى التي تستخدم الكاميرا`);
+                    
+                    return false;
+                }
+            }
+
+            // Simulate connection for demo
+            simulateConnection() {
+                this.isConnected = true;
+                this.connectionStatusEl.textContent = 'متصل';
+                this.connectionStatusEl.style.color = '#27ae60';
+                this.isRegistered = true;
+                this.userId = 'demo-user-' + Math.random().toString(36).substr(2, 9);
+            }
+
+            setupEventListeners() {
+                // Permission buttons
+                this.allowPermissionEl.addEventListener('click', async () => {
+                    this.allowPermissionEl.disabled = true;
+                    this.allowPermissionEl.textContent = '⏳ جاري طلب الإذن...';
+                    
+                    const granted = await this.requestPermissions();
+                    
+                    if (!granted) {
+                        this.allowPermissionEl.disabled = false;
+                        this.allowPermissionEl.innerHTML = '✅ السماح والبدء';
+                    }
+                });
+                
+                this.denyPermissionEl.addEventListener('click', () => {
+                    alert('❌ لا يمكن استخدام خمبقه بدون إذن الكاميرا والميكروفون');
+                });
+
+                // Instagram buttons
+                this.followBtnEl.addEventListener('click', () => {
+                    console.log('📸 Instagram follow clicked');
+                    this.addMessage('شكراً لمتابعتنا على انستقرام! 🌟', 'system');
+                    setTimeout(() => {
+                        this.hideInstagramPopup();
+                    }, 1000);
+                });
+
+                this.closeInstagramBtnEl.addEventListener('click', () => {
+                    this.hideInstagramPopup();
+                });
+
+                // Safety buttons
+                this.reportBtnEl.addEventListener('click', () => {
+                    this.showReportModal();
+                });
+
+                this.blockBtnEl.addEventListener('click', () => {
+                    this.showBlockModal();
+                });
+
+                this.sendReportBtnEl.addEventListener('click', () => {
+                    this.sendReport();
+                });
+
+                this.cancelReportBtnEl.addEventListener('click', () => {
+                    this.hideReportModal();
+                });
+
+                this.confirmBlockBtnEl.addEventListener('click', () => {
+                    this.confirmBlockUser();
+                });
+
+                this.cancelBlockBtnEl.addEventListener('click', () => {
+                    this.hideBlockModal();
+                });
+
+                // Report reason selection
+                document.querySelectorAll('.report-reason').forEach(reason => {
+                    reason.addEventListener('click', () => {
+                        document.querySelectorAll('.report-reason').forEach(r => r.classList.remove('selected'));
+                        reason.classList.add('selected');
+                        reason.querySelector('input').checked = true;
+                    });
+                });
+
+                // Close modals when clicking outside
+                [this.reportModalEl, this.blockModalEl].forEach(modal => {
+                    modal.addEventListener('click', (e) => {
+                        if (e.target === modal) {
+                            modal.style.display = 'none';
+                        }
+                    });
+                });
+
+                // Control buttons
+                this.startBtnEl.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.startChat();
+                });
+                
+                this.nextBtnEl.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.findNewPartner();
+                });
+                
+                this.stopBtnEl.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.stopChat();
+                });
+                
+                this.micBtnEl.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.toggleMic();
+                });
+                
+                this.cameraBtnEl.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.toggleCamera();
+                });
+
+                // Chat functionality
+                this.sendBtnEl.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.sendMessage();
+                });
+                
+                this.messageInputEl.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        this.sendMessage();
+                    }
+                });
+
+                // Prevent drag on videos
+                [this.localVideoEl, this.remoteVideoEl].forEach(video => {
+                    video.addEventListener('dragstart', (e) => e.preventDefault());
+                    video.addEventListener('contextmenu', (e) => e.preventDefault());
+                });
+            }
+
+            async startChat() {
+                if (!this.permissionGranted) {
+                    this.showError('يجب السماح للكاميرا والميكروفون أولاً');
+                    return;
+                }
+
+                try {
+                    this.showStatus('جاري تشغيل الكاميرا والميكروفون...');
+                    
+                    const isMobile = window.mobileDevice || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                    
+                    const constraints = {
+                        video: {
+                            width: isMobile ? { ideal: 640, max: 1280 } : { ideal: 1280, max: 1920 },
+                            height: isMobile ? { ideal: 480, max: 720 } : { ideal: 720, max: 1080 },
+                            frameRate: isMobile ? { ideal: 15, max: 24 } : { ideal: 24, max: 30 },
+                            facingMode: isMobile ? 'user' : undefined
+                        },
+                        audio: {
+                            echoCancellation: true,
+                            noiseSuppression: true,
+                            autoGainControl: true,
+                            sampleRate: isMobile ? 16000 : 44100
+                        }
+                    };
+                    
+                    this.localStream = await navigator.mediaDevices.getUserMedia(constraints);
+
+                    this.localVideoEl.srcObject = this.localStream;
+                    this.localVideoEl.style.display = 'block';
+                    this.localPlaceholderEl.style.display = 'none';
+
+                    this.startBtnEl.disabled = true;
+                    this.nextBtnEl.disabled = false;
+                    this.stopBtnEl.disabled = false;
+                    this.micBtnEl.disabled = false;
+                    this.cameraBtnEl.disabled = false;
+
+                    // Simulate finding partner
+                    this.simulateFindPartner();
+                    this.showStatus('جاري البحث عن شريك...');
+
+                } catch (error) {
+                    console.error('❌ Camera access error:', error);
+                    
+                    let errorMessage = 'لا يمكن الوصول للكاميرا أو الميكروفون';
+                    
+                    if (error.name === 'NotAllowedError') {
+                        errorMessage = 'تم رفض الإذن - يرجى السماح في إعدادات المتصفح';
+                    } else if (error.name === 'NotFoundError') {
+                        errorMessage = 'لم يتم العثور على كاميرا أو ميكروفون';
+                    } else if (error.name === 'NotReadableError') {
+                        errorMessage = 'الكاميرا مستخدمة من تطبيق آخر';
+                    } else if (error.name === 'OverconstrainedError') {
+                        errorMessage = 'إعدادات الكاميرا غير مدعومة';
+                    }
+                    
+                    this.showError(errorMessage);
+                }
+            }
+
+            // Simulate finding partner for demo
+            simulateFindPartner() {
+                this.showStatus('جاري البحث عن شريك...');
+                this.remotePlaceholderEl.innerHTML = '<i>⏳</i><span>جاري البحث عن شريك...</span>';
+                
+                setTimeout(() => {
+                    this.currentRoom = 'demo-room-' + Math.random().toString(36).substr(2, 9);
+                    this.showSuccess('تم العثور على شريك! 🎉');
+                    this.enableChatControls();
+                    this.remotePlaceholderEl.innerHTML = '<i>🔄</i><span>جاري الاتصال...</span>';
+                    
+                    // Simulate video connection
+                    setTimeout(() => {
+                        this.simulatePartnerVideo();
+                    }, 2000);
+                }, 3000);
+            }
+
+            // Simulate partner video for demo
+            simulatePartnerVideo() {
+                // Create a canvas with animated content to simulate partner video
+                const canvas = document.createElement('canvas');
+                canvas.width = 640;
+                canvas.height = 480;
+                const ctx = canvas.getContext('2d');
+                
+                const animate = () => {
+                    ctx.fillStyle = `hsl(${Date.now() * 0.1 % 360}, 50%, 50%)`;
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    ctx.fillStyle = 'white';
+                    ctx.font = '40px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('🎭 شريك تجريبي', canvas.width / 2, canvas.height / 2);
+                    
+                    requestAnimationFrame(animate);
+                };
+                animate();
+                
+                const stream = canvas.captureStream(30);
+                this.remoteVideoEl.srcObject = stream;
+                this.remoteVideoEl.style.display = 'block';
+                this.remotePlaceholderEl.style.display = 'none';
+                
+                this.showSuccess('تم الاتصال بالشريك بنجاح! 🎉');
+            }
+
+            findNewPartner() {
+                console.log('🔍 Finding new partner...');
+                this.showStatus('جاري البحث عن شريك جديد...');
+                this.remotePlaceholderEl.innerHTML = '<i>⏳</i><span>جاري البحث...</span>';
+                this.remotePlaceholderEl.style.display = 'flex';
+                this.remoteVideoEl.style.display = 'none';
+                
+                this.currentRoom = null;
+                this.disableChatControls();
+                
+                // Simulate finding new partner
+                this.simulateFindPartner();
+            }
+
+            stopChat() {
+                this.cleanup();
+                
+                this.startBtnEl.disabled = false;
+                this.nextBtnEl.disabled = true;
+                this.stopBtnEl.disabled = true;
+                this.disableChatControls();
+                
+                this.showStatus('تم إيقاف المحادثة');
+            }
+
+            toggleMic() {
+                this.micEnabled = !this.micEnabled;
+                
+                if (this.localStream) {
+                    this.localStream.getAudioTracks().forEach(track => {
+                        track.enabled = this.micEnabled;
+                    });
+                }
+                
+                const isMobile = window.innerWidth <= 768;
+                const micText = isMobile ? 'صوت' : 'الميكروفون';
+                const mutedText = isMobile ? 'كتم' : 'كتم الصوت';
+                
+                this.micBtnEl.innerHTML = this.micEnabled ? 
+                    `🎤 <span class="desktop-text">${micText}</span><span class="mobile-text">صوت</span>` : 
+                    `🔇 <span class="desktop-text">${mutedText}</span><span class="mobile-text">كتم</span>`;
+                    
+                this.micBtnEl.style.background = this.micEnabled ? '#667eea' : '#e74c3c';
+            }
+
+            toggleCamera() {
+                this.cameraEnabled = !this.cameraEnabled;
+                
+                if (this.localStream) {
+                    this.localStream.getVideoTracks().forEach(track => {
+                        track.enabled = this.cameraEnabled;
+                    });
+                }
+                
+                const isMobile = window.innerWidth <= 768;
+                const cameraText = isMobile ? 'فيديو' : 'الكاميرا';
+                const offText = isMobile ? 'مغلق' : 'إيقاف الكاميرا';
+                
+                this.cameraBtnEl.innerHTML = this.cameraEnabled ? 
+                    `📹 <span class="desktop-text">${cameraText}</span><span class="mobile-text">فيديو</span>` : 
+                    `📷 <span class="desktop-text">${offText}</span><span class="mobile-text">مغلق</span>`;
+                    
+                this.cameraBtnEl.style.background = this.cameraEnabled ? '#667eea' : '#e74c3c';
+            }
+
+            sendMessage() {
+                const message = this.messageInputEl.value.trim();
+                if (!message || !this.currentRoom) return;
+
+                this.addMessage(message, 'own');
+                this.messageInputEl.value = '';
+                
+                // Simulate partner response
+                setTimeout(() => {
+                    const responses = [
+                        'أهلاً وسهلاً! 👋',
+                        'كيف حالك؟ 😊',
+                        'سعيد بالتحدث معك! 🎉',
+                        'من أي بلد أنت؟ 🌍',
+                        'الطقس جميل اليوم! ☀️'
+                    ];
+                    const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+                    this.addMessage(randomResponse, 'other');
+                }, 1000 + Math.random() * 2000);
+            }
+
+            addMessage(text, type) {
+                const messageEl = document.createElement('div');
+                messageEl.className = `message ${type}`;
+                messageEl.textContent = text;
+                
+                this.chatMessagesEl.appendChild(messageEl);
+                this.chatMessagesEl.scrollTop = this.chatMessagesEl.scrollHeight;
+            }
+
+            showStatus(message) {
+                this.statusDivEl.innerHTML = `<div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <span style="font-size: 1.5em; animation: pulse 1s infinite;">⏳</span>
+                    <span>${message}</span>
+                </div>`;
+                this.statusDivEl.className = 'loading';
+                this.statusDivEl.classList.remove('hidden');
+                
+                setTimeout(() => {
+                    this.statusDivEl.classList.add('hidden');
+                }, 5000);
+            }
+
+            showError(message) {
+                this.statusDivEl.innerHTML = `<div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <span style="font-size: 1.5em;">⚠️</span>
+                    <span>${message}</span>
+                </div>`;
+                this.statusDivEl.className = 'error';
+                this.statusDivEl.classList.remove('hidden');
+                
+                this.statusDivEl.style.animation = 'shake 0.5s ease-in-out';
+                setTimeout(() => {
+                    this.statusDivEl.style.animation = '';
+                }, 500);
+                
+                setTimeout(() => {
+                    this.statusDivEl.classList.add('hidden');
+                }, 6000);
+            }
+
+            showSuccess(message) {
+                this.statusDivEl.innerHTML = `<div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <span style="font-size: 1.5em;">✅</span>
+                    <span>${message}</span>
+                </div>`;
+                this.statusDivEl.className = 'success';
+                this.statusDivEl.classList.remove('hidden');
+                
+                this.statusDivEl.style.animation = 'pulse 0.6s ease-in-out';
+                setTimeout(() => {
+                    this.statusDivEl.style.animation = '';
+                }, 600);
+                
+                setTimeout(() => {
+                    this.statusDivEl.classList.add('hidden');
+                }, 4000);
+            }
+
+            enableChatControls() {
+                this.messageInputEl.disabled = false;
+                this.sendBtnEl.disabled = false;
+                this.reportBtnEl.disabled = false;
+                this.blockBtnEl.disabled = false;
+            }
+
+            disableChatControls() {
+                this.messageInputEl.disabled = true;
+                this.sendBtnEl.disabled = true;
+                this.reportBtnEl.disabled = true;
+                this.blockBtnEl.disabled = true;
+            }
+
+            updateStats(stats) {
+                this.activeUsersEl.textContent = stats.activeUsers;
+                this.waitingUsersEl.textContent = stats.waitingUsers;
+                this.activeRoomsEl.textContent = stats.activeRooms;
+            }
+
+            // Safety Functions
+            showReportModal() {
+                if (!this.currentRoom) {
+                    this.showError('يجب أن تكون في محادثة لتقديم تقرير');
+                    return;
+                }
+                
+                this.reportModalEl.style.display = 'flex';
+                
+                // Clear previous selection
+                document.querySelectorAll('.report-reason').forEach(r => {
+                    r.classList.remove('selected');
+                    r.querySelector('input').checked = false;
+                });
+                this.reportDetailsEl.value = '';
+                
+                // Focus on first option
+                setTimeout(() => {
+                    document.querySelector('.report-reason input').focus();
+                }, 100);
+            }
+
+            hideReportModal() {
+                this.reportModalEl.style.display = 'none';
+            }
+
+            showBlockModal() {
+                if (!this.currentRoom) {
+                    this.showError('يجب أن تكون في محادثة لحظر مستخدم');
+                    return;
+                }
+                
+                this.blockModalEl.style.display = 'flex';
+            }
+
+            hideBlockModal() {
+                this.blockModalEl.style.display = 'none';
+            }
+
+            sendReport() {
+                const selectedReason = document.querySelector('input[name="reportReason"]:checked');
+                
+                if (!selectedReason) {
+                    // Visual shake effect
+                    document.querySelectorAll('.report-reason').forEach(r => {
+                        r.style.animation = 'shake 0.5s ease-in-out';
+                        setTimeout(() => r.style.animation = '', 500);
+                    });
+                    
+                    this.showError('يرجى اختيار سبب التقرير أولاً');
+                    return;
+                }
+                
+                // Loading effect
+                this.sendReportBtnEl.innerHTML = '⏳ جاري الإرسال...';
+                this.sendReportBtnEl.disabled = true;
+                
+                const reportData = {
+                    reason: selectedReason.value,
+                    details: this.reportDetailsEl.value.trim(),
+                    timestamp: new Date().toISOString(),
+                    sessionId: this.currentRoom,
+                    reporterCountry: this.countrySelectEl.value
+                };
+                
+                // Simulate report submission
+                setTimeout(() => {
+                    this.addMessage('تم إرسال التقرير بنجاح ✅', 'system');
+                    this.hideReportModal();
+                    
+                    this.sendReportBtnEl.innerHTML = '🚨 إرسال التقرير';
+                    this.sendReportBtnEl.disabled = false;
+                }, 1000);
+                
+                setTimeout(() => {
+                    this.addMessage('سيتم مراجعة التقرير خلال 24 ساعة 📋', 'system');
+                }, 2500);
+                
+                setTimeout(() => {
+                    this.addMessage('شكراً لمساعدتك في جعل خمبقه مكاناً آمناً للجميع 🛡️', 'system');
+                }, 4000);
+                
+                console.log('🚨 Report sent:', reportData.reason);
+            }
+
+            confirmBlockUser() {
+                this.confirmBlockBtnEl.innerHTML = '⏳ جاري الحظر...';
+                this.confirmBlockBtnEl.disabled = true;
+                
+                // Simulate block action
+                setTimeout(() => {
+                    this.addMessage('تم حظر المستخدم بنجاح ✅', 'system');
+                    this.hideBlockModal();
+                    
+                    this.confirmBlockBtnEl.innerHTML = '🚫 نعم، احظره';
+                    this.confirmBlockBtnEl.disabled = false;
+                }, 1000);
+                
+                setTimeout(() => {
+                    this.addMessage('جاري البحث عن شريك جديد... 🔍', 'system');
+                    this.findNewPartner();
+                }, 2500);
+                
+                console.log('🚫 User blocked in room:', this.currentRoom);
+            }
+
+            // Enhanced safety reminders
+            startSafetyReminders() {
+                // Welcome reminder
+                setTimeout(() => {
+                    this.addMessage('💡 نصيحة: استخدم أزرار الإبلاغ والحظر عند الحاجة', 'system');
+                }, 30000); // After 30 seconds
+
+                // Periodic reminders
+                setInterval(() => {
+                    if (this.currentRoom) {
+                        this.showSafetyReminder();
+                    }
+                }, 8 * 60 * 1000); // Every 8 minutes
+            }
+
+            showSafetyReminder() {
+                const reminders = [
+                    '🔒 تذكير: لا تشارك معلوماتك الشخصية مع الغرباء',
+                    '🚨 للأمان: يمكنك الإبلاغ عن أي سلوك غير لائق في أي وقت',
+                    '😊 نصيحة: تصرف بأدب واحترم الآخرين كما تحب أن تُعامل',
+                    '🛡️ تذكير: خصوصيتك مهمة لنا - لا نسجل أو نحفظ المحادثات',
+                    '🔗 تحذير: تجنب النقر على روابط مشبوهة أو تحميل ملفات',
+                    '⏰ نصيحة: خذ استراحة كل فترة من استخدام الإنترنت',
+                    '🌟 تذكير: ساعدنا في جعل خمبقه مجتمعاً آمناً للجميع'
+                ];
+                
+                const randomReminder = reminders[Math.floor(Math.random() * reminders.length)];
+                this.addMessage(randomReminder, 'system');
+            }
+
+            cleanup() {
+                // Stop local stream
+                if (this.localStream) {
+                    this.localStream.getTracks().forEach(track => track.stop());
+                    this.localStream = null;
+                }
+
+                // Hide videos
+                this.localVideoEl.style.display = 'none';
+                this.remoteVideoEl.style.display = 'none';
+                this.localPlaceholderEl.style.display = 'flex';
+                this.remotePlaceholderEl.style.display = 'flex';
+                this.currentRoom = null;
+            }
+
+            // Helper functions for developers
+            resetInstagramPopup() {
+                localStorage.removeItem('khambaqah_instagram_shown');
+                console.log('✅ Instagram popup reset - will show on next visit');
+            }
+
+            forceShowInstagram() {
+                this.showInstagramPopup();
+                console.log('📸 Instagram popup shown forcefully');
+            }
+        }
+
+        // Initialize app with mobile optimizations
+        document.addEventListener('DOMContentLoaded', () => {
+            // Prevent double-tap zoom on iOS
+            let lastTouchEnd = 0;
+            document.addEventListener('touchend', function (event) {
+                const now = (new Date()).getTime();
+                if (now - lastTouchEnd <= 300) {
+                    event.preventDefault();
+                }
+                lastTouchEnd = now;
+            }, false);
+
+            // Prevent drag on mobile
+            document.addEventListener('touchmove', function(e) {
+                if (e.target.tagName === 'VIDEO' || e.target.closest('.video-container')) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+
+            // Mobile device detection
+            if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                window.mobileDevice = true;
+                document.body.classList.add('mobile-device');
+            }
+
+            // Create and store app instance globally
+            window.app = new ChatLivePro();
+        });
+
+        // Global functions for easy access
+        window.resetInstagramPopup = () => window.app.resetInstagramPopup();
+        window.showInstagram = () => window.app.forceShowInstagram();
+    </script>
+</body>
+</html>
