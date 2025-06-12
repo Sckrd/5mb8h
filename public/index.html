@@ -842,6 +842,7 @@
                     <div id="chatMessages" class="chat-messages">
                         <div class="message system">أهلاً بك في خمبقه! 🎉</div>
                         <div class="message system">يرجى السماح للوصول إلى الكاميرا والميكروفون 📹🎤</div>
+                        <div class="message system">💡 نصيحة: تأكد من أن كاميرتك تعمل قبل البدء</div>
                     </div>
                     <div class="chat-input">
                         <input type="text" id="messageInput" placeholder="اكتب رسالتك..." disabled>
@@ -897,12 +898,16 @@
                 this.cameraEnabled = true;
                 this.permissionGranted = false;
 
-                // إعداد WebRTC
+                // إعداد WebRTC محسن
                 this.peerConfig = {
                     iceServers: [
                         { urls: 'stun:stun.l.google.com:19302' },
-                        { urls: 'stun:stun1.l.google.com:19302' }
-                    ]
+                        { urls: 'stun:stun1.l.google.com:19302' },
+                        { urls: 'stun:stun2.l.google.com:19302' },
+                        { urls: 'stun:stun3.l.google.com:19302' },
+                        { urls: 'stun:stun4.l.google.com:19302' }
+                    ],
+                    iceCandidatePoolSize: 10
                 };
 
                 this.init();
@@ -1083,8 +1088,12 @@
                         this.currentRoom = data.roomId;
                         this.showSuccess(data.message);
                         this.enableChatControls();
-                        this.remotePlaceholderEl.innerHTML = '<i>👤</i><span>شريك متصل!</span>';
-                        this.initializeWebRTC();
+                        this.remotePlaceholderEl.innerHTML = '<i>🔄</i><span>جاري الاتصال...</span>';
+                        
+                        // تأخير صغير ثم بدء WebRTC
+                        setTimeout(() => {
+                            this.createAndSendOffer();
+                        }, 1000);
                     });
 
                     this.socket.on('partner-left', (data) => {
@@ -1197,16 +1206,20 @@
             }
 
             findNewPartner() {
+                console.log('🔍 البحث عن شريك جديد...');
                 this.showStatus('جاري البحث عن شريك جديد...');
                 this.remotePlaceholderEl.innerHTML = '<i>⏳</i><span>جاري البحث...</span>';
                 this.remotePlaceholderEl.style.display = 'flex';
                 this.remoteVideoEl.style.display = 'none';
                 
+                // إغلاق الاتصال الحالي
                 if (this.peerConnection) {
+                    console.log('🔌 إغلاق WebRTC الحالي...');
                     this.peerConnection.close();
                     this.peerConnection = null;
                 }
                 
+                this.currentRoom = null;
                 this.disableChatControls();
                 this.socket.emit('find-partner');
             }
@@ -1340,37 +1353,65 @@
             // WebRTC Functions
             async initializeWebRTC() {
                 try {
+                    console.log('🔄 إنشاء اتصال WebRTC...');
+                    
                     this.peerConnection = new RTCPeerConnection(this.peerConfig);
 
-                    // إضافة الستريم المحلي
+                    // إضافة الستريم المحلي أولاً
                     if (this.localStream) {
+                        console.log('📹 إضافة الستريم المحلي...');
                         this.localStream.getTracks().forEach(track => {
+                            console.log('🎵 إضافة track:', track.kind);
                             this.peerConnection.addTrack(track, this.localStream);
                         });
                     }
 
                     // معالجة الستريم البعيد
                     this.peerConnection.ontrack = (event) => {
-                        console.log('📺 تم استقبال الفيديو البعيد');
-                        this.remoteVideoEl.srcObject = event.streams[0];
-                        this.remoteVideoEl.style.display = 'block';
-                        this.remotePlaceholderEl.style.display = 'none';
+                        console.log('📺 تم استقبال الستريم البعيد:', event.streams.length);
+                        if (event.streams && event.streams[0]) {
+                            console.log('🎥 عرض فيديو الشريك...');
+                            this.remoteVideoEl.srcObject = event.streams[0];
+                            this.remoteVideoEl.style.display = 'block';
+                            this.remotePlaceholderEl.style.display = 'none';
+                            
+                            // التأكد من تشغيل الفيديو
+                            this.remoteVideoEl.play().catch(e => {
+                                console.log('⚠️ تحذير تشغيل الفيديو:', e);
+                            });
+                        }
                     };
 
                     // معالجة ICE candidates
                     this.peerConnection.onicecandidate = (event) => {
                         if (event.candidate) {
+                            console.log('🧊 إرسال ICE candidate');
                             this.socket.emit('webrtc-ice-candidate', {
                                 candidate: event.candidate
                             });
                         }
                     };
 
-                    // إنشاء العرض
-                    const offer = await this.peerConnection.createOffer();
-                    await this.peerConnection.setLocalDescription(offer);
-                    
-                    this.socket.emit('webrtc-offer', { offer });
+                    // معالجة تغيير حالة الاتصال
+                    this.peerConnection.onconnectionstatechange = () => {
+                        console.log('🔗 حالة الاتصال:', this.peerConnection.connectionState);
+                        
+                        if (this.peerConnection.connectionState === 'connected') {
+                            this.showSuccess('تم الاتصال بالشريك بنجاح! 🎉');
+                        } else if (this.peerConnection.connectionState === 'disconnected') {
+                            this.showError('انقطع الاتصال مع الشريك');
+                        } else if (this.peerConnection.connectionState === 'failed') {
+                            this.showError('فشل في الاتصال مع الشريك');
+                            this.retryConnection();
+                        }
+                    };
+
+                    // معالجة حالة ICE
+                    this.peerConnection.oniceconnectionstatechange = () => {
+                        console.log('🧊 حالة ICE:', this.peerConnection.iceConnectionState);
+                    };
+
+                    console.log('✅ تم إعداد WebRTC بنجاح');
 
                 } catch (error) {
                     console.error('❌ خطأ في WebRTC:', error);
@@ -1380,35 +1421,93 @@
 
             async handleWebRTCOffer(data) {
                 try {
+                    console.log('📞 استقبال عرض WebRTC من:', data.senderId);
+                    
                     if (!this.peerConnection) {
+                        console.log('🔄 إنشاء WebRTC جديد للاستقبال...');
                         await this.initializeWebRTC();
                     }
 
-                    await this.peerConnection.setRemoteDescription(data.offer);
+                    // تعيين الوصف البعيد
+                    await this.peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+                    console.log('✅ تم تعيين Remote Description');
+
+                    // إنشاء الإجابة
                     const answer = await this.peerConnection.createAnswer();
                     await this.peerConnection.setLocalDescription(answer);
+                    console.log('✅ تم إنشاء الإجابة');
                     
+                    // إرسال الإجابة
                     this.socket.emit('webrtc-answer', { answer });
+                    console.log('📤 تم إرسال الإجابة');
 
                 } catch (error) {
                     console.error('❌ خطأ في معالجة WebRTC offer:', error);
+                    this.showError('خطأ في استقبال المكالمة');
                 }
             }
 
             async handleWebRTCAnswer(data) {
                 try {
-                    await this.peerConnection.setRemoteDescription(data.answer);
+                    console.log('📞 استقبال إجابة WebRTC من:', data.senderId);
+                    
+                    if (this.peerConnection && data.answer) {
+                        await this.peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+                        console.log('✅ تم تعيين Remote Description للإجابة');
+                    }
                 } catch (error) {
                     console.error('❌ خطأ في معالجة WebRTC answer:', error);
+                    this.showError('خطأ في استقبال الإجابة');
                 }
             }
 
             async handleWebRTCIceCandidate(data) {
                 try {
-                    await this.peerConnection.addIceCandidate(data.candidate);
+                    if (this.peerConnection && data.candidate) {
+                        await this.peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+                        console.log('🧊 تم إضافة ICE candidate');
+                    }
                 } catch (error) {
                     console.error('❌ خطأ في معالجة ICE candidate:', error);
+                    // لا نظهر خطأ للمستخدم هنا لأنه طبيعي أحياناً
                 }
+            }
+
+            async createAndSendOffer() {
+                try {
+                    if (!this.peerConnection) {
+                        await this.initializeWebRTC();
+                    }
+
+                    console.log('📞 إنشاء عرض WebRTC...');
+                    
+                    // إنشاء العرض
+                    const offer = await this.peerConnection.createOffer({
+                        offerToReceiveAudio: true,
+                        offerToReceiveVideo: true
+                    });
+                    
+                    await this.peerConnection.setLocalDescription(offer);
+                    console.log('✅ تم إنشاء العرض');
+                    
+                    // إرسال العرض
+                    this.socket.emit('webrtc-offer', { offer });
+                    console.log('📤 تم إرسال العرض');
+
+                } catch (error) {
+                    console.error('❌ خطأ في إنشاء العرض:', error);
+                    this.showError('خطأ في بدء المكالمة');
+                }
+            }
+
+            retryConnection() {
+                console.log('🔄 إعادة محاولة الاتصال...');
+                
+                setTimeout(() => {
+                    if (this.currentRoom && this.localStream) {
+                        this.createAndSendOffer();
+                    }
+                }, 2000);
             }
 
             cleanup() {
