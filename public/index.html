@@ -1,4 +1,67 @@
-<!DOCTYPE html>
+// وظائف الأمان
+            showReportModal() {
+                if (!this.currentRoom) {
+                    this.showError('يجب أن تكون في محادثة لتقديم تقرير');
+                    return;
+                }
+                
+                this.reportModalEl.style.display = 'flex';
+                this.warningBannerEl.style.display = 'block';
+                
+                // مسح التحديد السابق
+                document.querySelectorAll('.report-reason').forEach(r => {
+                    r.classList.remove('selected');
+                    r.querySelector('input').checked = false;
+                });
+                this.reportDetailsEl.value = '';
+                
+                // تركيز على أول خيار
+                setTimeout(() => {
+                    document.querySelector('.report-reason input').focus();
+                }, 100);
+            }
+
+            hideReportModal() {
+                this.reportModalEl.style.display = 'none';
+            }
+
+            showBlockModal() {
+                if (!this.currentRoom) {
+                    this.showError('يجب أن تكون في محادثة لحظر مستخدم');
+                    return;
+                }
+                
+                this.blockModalEl.style.display = 'flex';
+            }
+
+            hideBlockModal() {
+                this.blockModalEl.style.display = 'none';
+            }
+
+            sendReport() {
+                const selectedReason = document.querySelector('input[name="reportReason"]:checked');
+                
+                if (!selectedReason) {
+                    // تأثير بصري للتنبيه
+                    document.querySelectorAll('.report-reason').forEach(r => {
+                        r.style.animation = 'shake 0.5s ease-in-out';
+                        setTimeout(() => r.style.animation = '', 500);
+                    });
+                    
+                    this.showError('يرجى اختيار سبب التقرير أولاً');
+                    return;
+                }
+                
+                // تأثير التحميل
+                this.sendReportBtnEl.innerHTML = '⏳ جاري الإرسال...';
+                this.sendReportBtnEl.disabled = true;
+                
+                const reportData = {
+                    reason: selectedReason.value,
+                    details: this.reportDetailsEl.value.trim(),
+                    timestamp: new Date().toISOString(),
+                    sessionId: this.currentRoom,
+                    reporterCountry: this.countrySelectEl.value<!DOCTYPE html>
 <html dir="rtl" lang="ar">
 <head>
     <meta charset="UTF-8">
@@ -115,7 +178,6 @@
             justify-content: center;
             gap: 10px;
             margin-top: 15px;
-            flex-wrap: wrap;
         }
 
         .control-btn {
@@ -130,8 +192,6 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            min-width: 140px;
-            justify-content: center;
         }
 
         .control-btn:hover {
@@ -160,34 +220,6 @@
 
         .control-btn.success:hover {
             background: #229954;
-        }
-
-        .safety-controls {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-top: 15px;
-            padding: 15px;
-            background: rgba(255,0,0,0.05);
-            border-radius: 10px;
-            border: 2px dashed rgba(255,0,0,0.2);
-        }
-
-        .safety-btn {
-            background: #e74c3c;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 0.9em;
-            transition: all 0.3s ease;
-            min-width: 100px;
-        }
-
-        .safety-btn:hover {
-            background: #c0392b;
-            transform: translateY(-1px);
         }
 
         .sidebar {
@@ -302,6 +334,31 @@
             background: #5a6fd8;
         }
 
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+            color: #666;
+        }
+
+        .error {
+            background: #e74c3c;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        .success {
+            background: #27ae60;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            text-align: center;
+        }
+
         .country-select {
             margin-bottom: 20px;
         }
@@ -315,35 +372,15 @@
             background: white;
         }
 
-        .loading, .error, .success {
-            text-align: center;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 10px 0;
-            font-weight: bold;
-        }
-
-        .loading {
-            background: #3498db;
-            color: white;
-        }
-
-        .error {
-            background: #e74c3c;
-            color: white;
-        }
-
-        .success {
-            background: #27ae60;
-            color: white;
-        }
-
         .hidden {
             display: none !important;
         }
 
-        /* Modal Styles */
-        .modal {
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        .permission-modal {
             position: fixed;
             top: 0;
             left: 0;
@@ -356,196 +393,165 @@
             z-index: 1000;
         }
 
-        .modal-content {
+        .permission-content {
             background: white;
-            padding: 30px;
+            padding: 40px;
             border-radius: 20px;
             text-align: center;
             max-width: 500px;
             width: 90%;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            position: relative;
-            animation: modalOpen 0.3s ease;
         }
 
-        @keyframes modalOpen {
-            from {
-                opacity: 0;
-                transform: scale(0.8) translateY(-50px);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-            }
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-
-        .modal-header {
-            font-size: 3em;
-            margin-bottom: 15px;
-        }
-
-        .modal h3 {
+        .permission-content h2 {
             color: #667eea;
-            margin-bottom: 15px;
-            font-size: 1.5em;
+            margin-bottom: 20px;
+            font-size: 2em;
         }
 
-        .modal p {
+        .permission-content p {
             color: #333;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
+            font-size: 1.1em;
             line-height: 1.6;
         }
 
-        .modal-buttons {
+        .permission-icon {
+            font-size: 5em;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+
+        .permission-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .permission-btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+
+        .permission-btn.allow {
+            background: #27ae60;
+            color: white;
+        }
+
+        .permission-btn.allow:hover {
+            background: #229954;
+            transform: translateY(-2px);
+        }
+
+        .permission-btn.deny {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .permission-btn.deny:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+
+        .instagram-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .instagram-content {
+            background: linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            color: white;
+            position: relative;
+        }
+
+        .instagram-content::before {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            right: 2px;
+            bottom: 2px;
+            background: white;
+            border-radius: 18px;
+            z-index: -1;
+        }
+
+        .instagram-inner {
+            background: linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%);
+            padding: 25px;
+            border-radius: 16px;
+            position: relative;
+        }
+
+        .instagram-icon {
+            font-size: 4em;
+            margin-bottom: 15px;
+            animation: bounce 2s infinite;
+        }
+
+        .instagram-content h3 {
+            margin-bottom: 15px;
+            font-size: 1.4em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .instagram-content p {
+            margin-bottom: 20px;
+            font-size: 1em;
+            line-height: 1.5;
+            opacity: 0.95;
+        }
+
+        .instagram-buttons {
             display: flex;
             gap: 15px;
             justify-content: center;
             flex-wrap: wrap;
         }
 
-        .modal-btn {
+        .instagram-btn {
             padding: 12px 25px;
             border: none;
             border-radius: 25px;
             font-size: 1em;
             cursor: pointer;
             transition: all 0.3s ease;
-            min-width: 120px;
-        }
-
-        .modal-btn.primary {
-            background: #667eea;
-            color: white;
-        }
-
-        .modal-btn.primary:hover {
-            background: #5a6fd8;
-            transform: translateY(-2px);
-        }
-
-        .modal-btn.danger {
-            background: #e74c3c;
-            color: white;
-        }
-
-        .modal-btn.danger:hover {
-            background: #c0392b;
-            transform: translateY(-2px);
-        }
-
-        .modal-btn.secondary {
-            background: #95a5a6;
-            color: white;
-        }
-
-        .modal-btn.secondary:hover {
-            background: #7f8c8d;
-            transform: translateY(-2px);
-        }
-
-        /* Report Modal Styles */
-        .report-reasons {
-            margin: 20px 0;
-            text-align: right;
-        }
-
-        .report-reason {
-            display: flex;
-            align-items: center;
-            padding: 12px 15px;
-            margin: 8px 0;
-            border: 2px solid #eee;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background: white;
-        }
-
-        .report-reason:hover {
-            border-color: #667eea;
-            background: #f8f9ff;
-        }
-
-        .report-reason.selected {
-            border-color: #667eea;
-            background: #667eea;
-            color: white;
-        }
-
-        .report-reason input {
-            margin-left: 10px;
-            pointer-events: none;
-        }
-
-        .report-textarea {
-            width: 100%;
-            min-height: 100px;
-            padding: 15px;
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            font-size: 1em;
-            font-family: inherit;
-            resize: vertical;
-            margin: 15px 0;
-        }
-
-        .report-textarea:focus {
-            border-color: #667eea;
-            outline: none;
-        }
-
-        .warning-banner {
-            background: linear-gradient(45deg, #f39c12, #e67e22);
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
-            margin: 15px 0;
-            font-weight: bold;
-            text-align: center;
-        }
-
-        /* Instagram Modal Styles */
-        .instagram-modal {
-            background: linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%);
-        }
-
-        .instagram-content {
-            background: linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%);
-            color: white;
-        }
-
-        .instagram-username {
-            font-family: 'Instagram Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-            font-weight: bold;
-            font-size: 1.2em;
-            margin: 15px 0;
-            background: rgba(255,255,255,0.9);
-            color: #dc2743;
-            padding: 10px 20px;
-            border-radius: 15px;
-            display: inline-block;
-        }
-
-        .instagram-btn {
             text-decoration: none;
             display: inline-block;
+            font-weight: bold;
+            min-width: 120px;
         }
 
         .instagram-btn.follow {
             background: white;
             color: #dc2743;
+            border: 2px solid white;
+        }
+
+        .instagram-btn.follow:hover {
+            background: #f8f8f8;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
 
         .instagram-btn.close {
@@ -554,8 +560,81 @@
             border: 2px solid rgba(255,255,255,0.3);
         }
 
-        /* Mobile Optimization */
+        .instagram-btn.close:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .instagram-username {
+            font-family: 'Instagram Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-weight: bold;
+            font-size: 1.1em;
+            margin: 10px 0;
+            background: rgba(255,255,255,0.9);
+            color: #dc2743;
+            padding: 8px 15px;
+            border-radius: 15px;
+            display: inline-block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        @media (max-width: 480px) {
+            .instagram-content {
+                padding: 20px 15px;
+                margin: 20px;
+            }
+
+            .instagram-inner {
+                padding: 20px;
+            }
+
+            .instagram-icon {
+                font-size: 3em;
+            }
+
+            .instagram-content h3 {
+                font-size: 1.2em;
+            }
+
+            .instagram-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .instagram-btn {
+                width: 100%;
+                max-width: 200px;
+            }
+        }
+
+        .mobile-text {
+            display: none;
+        }
+
+        .desktop-text {
+            display: inline;
+        }
+
+        /* تحسينات الجوال */
         @media (max-width: 768px) {
+            .mobile-text {
+                display: inline;
+            }
+
+            .desktop-text {
+                display: none;
+            }
+
             .container {
                 padding: 10px;
             }
@@ -590,20 +669,21 @@
             }
             
             .video-controls {
+                display: grid;
                 grid-template-columns: 1fr 1fr;
                 gap: 8px;
                 margin-top: 10px;
             }
 
             .control-btn {
-                padding: 10px 12px;
+                padding: 12px 8px;
                 font-size: 0.85em;
                 border-radius: 20px;
-                min-width: auto;
             }
 
-            .control-btn span.desktop-text {
-                display: none;
+            .control-btn:nth-child(1),
+            .control-btn:nth-child(2) {
+                grid-column: 1 / -1;
             }
 
             .safety-controls {
@@ -619,31 +699,83 @@
                 min-width: auto;
             }
 
-            .video-section,
-            .status-panel,
-            .chat-section {
+            .video-section {
+                padding: 15px;
+            }
+
+            .sidebar {
+                gap: 15px;
+            }
+
+            .status-panel {
                 padding: 15px;
             }
 
             .chat-section {
                 height: 300px;
+                padding: 15px;
             }
 
-            .modal-content {
-                padding: 20px 15px;
-                margin: 20px;
+            .chat-messages {
+                font-size: 0.9em;
+                padding: 10px;
+            }
+
+            .message {
+                padding: 6px 10px;
+                font-size: 0.9em;
+                margin-bottom: 8px;
+            }
+
+            .chat-input input {
+                padding: 10px;
+                font-size: 16px;
+            }
+
+            .chat-input button {
+                padding: 10px 15px;
+                font-size: 0.9em;
+            }
+
+            .country-select select {
+                padding: 12px;
+                font-size: 16px;
+            }
+
+            .status-panel h3 {
+                font-size: 1.1em;
+                margin-bottom: 12px;
+            }
+
+            .status-item {
+                font-size: 0.9em;
+                padding: 6px 0;
+            }
+
+            /* تحسين نوافذ الأمان للجوال */
+            .report-content, .block-content {
+                padding: 3px;
+                margin: 15px;
                 max-width: none;
-                width: calc(100% - 40px);
+                width: calc(100% - 30px);
             }
 
-            .modal-buttons {
-                flex-direction: column;
-                align-items: center;
+            .report-inner, .block-inner {
+                padding: 25px 20px;
             }
 
-            .modal-btn {
-                width: 100%;
-                max-width: 250px;
+            .report-icon, .block-icon {
+                font-size: 3em;
+                margin-bottom: 15px;
+            }
+
+            .report-content h3, .block-content h3 {
+                font-size: 1.4em;
+                margin-bottom: 15px;
+            }
+
+            .report-reasons {
+                margin: 20px 0;
             }
 
             .report-reason {
@@ -658,21 +790,338 @@
                 font-size: 16px;
             }
 
+            .report-buttons, .block-buttons {
+                flex-direction: column;
+                gap: 12px;
+                align-items: center;
+            }
+
+            .report-btn {
+                width: 100%;
+                max-width: 250px;
+                padding: 12px 20px;
+                font-size: 1em;
+            }
+
+            .warning-banner {
+                padding: 15px 12px;
+                font-size: 1em;
+                margin: 15px 0;
+            }
+
+            /* تحسين نافذة الانستقرام للجوال */
+            .instagram-content {
+                padding: 25px 15px;
+                margin: 20px;
+            }
+
+            .instagram-inner {
+                padding: 20px;
+            }
+
+            .instagram-icon {
+                font-size: 3em;
+            }
+
+            .instagram-content h2 {
+                font-size: 1.5em;
+            }
+
+            .instagram-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .instagram-btn {
+                width: 100%;
+                max-width: 200px;
+            }
+
+            /* تحسين نافذة الإذن للجوال */
+            .permission-content {
+                padding: 25px 15px;
+                margin: 20px;
+                max-width: none;
+                width: calc(100% - 40px);
+            }
+
+            .permission-content h2 {
+                font-size: 1.5em;
+                margin-bottom: 15px;
+            }
+
+            .permission-content p {
+                font-size: 1em;
+                margin-bottom: 20px;
+                line-height: 1.5;
+            }
+
+            .permission-icon {
+                font-size: 4em;
+                margin-bottom: 15px;
+            }
+
+            .permission-buttons {
+                flex-direction: column;
+                gap: 12px;
+                align-items: stretch;
+            }
+
+            .permission-btn {
+                padding: 15px 20px;
+                font-size: 1em;
+                width: 100%;
+            }
+        }
+            .container {
+                padding: 10px;
+            }
+
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .video-grid {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .video-container {
+                aspect-ratio: 4/3; /* نسبة أفضل للجوال */
+            }
+            
+            .header {
+                padding: 15px;
+                margin-bottom: 20px;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+                margin-bottom: 8px;
+            }
+
+            .header p {
+                font-size: 1em;
+                line-height: 1.4;
+            }
+            
+            .video-controls {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                margin-top: 10px;
+            }
+
+            .control-btn {
+                padding: 12px 8px;
+                font-size: 0.85em;
+                border-radius: 20px;
+            }
+
+            /* جعل أزرار البدء والإيقاف تأخذ العرض الكامل */
+            .control-btn:nth-child(1),
+            .control-btn:nth-child(3) {
+                grid-column: 1 / -1;
+            }
+
+            .video-section {
+                padding: 15px;
+            }
+
+            .sidebar {
+                gap: 15px;
+            }
+
+            .status-panel {
+                padding: 15px;
+            }
+
+            .chat-section {
+                height: 300px;
+                padding: 15px;
+            }
+
+            .chat-messages {
+                font-size: 0.9em;
+                padding: 10px;
+            }
+
+            .message {
+                padding: 6px 10px;
+                font-size: 0.9em;
+                margin-bottom: 8px;
+            }
+
             .chat-input input {
-                font-size: 16px;
+                padding: 10px;
+                font-size: 16px; /* منع الزوم في iOS */
+            }
+
+            .chat-input button {
+                padding: 10px 15px;
+                font-size: 0.9em;
             }
 
             .country-select select {
-                font-size: 16px;
+                padding: 12px;
+                font-size: 16px; /* منع الزوم في iOS */
+            }
+
+            .status-panel h3 {
+                font-size: 1.1em;
+                margin-bottom: 12px;
+            }
+
+            .status-item {
+                font-size: 0.9em;
+                padding: 6px 0;
+            }
+
+            /* تحسين نافذة الإذن للجوال */
+            .permission-content {
+                padding: 25px 15px;
+                margin: 20px;
+                max-width: none;
+                width: calc(100% - 40px);
+            }
+
+            .permission-content h2 {
+                font-size: 1.5em;
+                margin-bottom: 15px;
+            }
+
+            .permission-content p {
+                font-size: 1em;
+                margin-bottom: 20px;
+                line-height: 1.5;
+            }
+
+            .permission-icon {
+                font-size: 4em;
+                margin-bottom: 15px;
+            }
+
+            .permission-buttons {
+                flex-direction: column;
+                gap: 12px;
+                align-items: stretch;
+            }
+
+            .permission-btn {
+                padding: 15px 20px;
+                font-size: 1em;
+                width: 100%;
+            }
+
+            /* إخفاء النص الطويل في الأزرار على الجوال */
+            .control-btn span.desktop-text {
+                display: none;
+            }
+
+            /* تحسين الفيديو للجوال */
+            .video-placeholder {
+                font-size: 1em;
+            }
+
+            .video-placeholder i {
+                font-size: 2.5em;
+                margin-bottom: 8px;
             }
         }
 
-        /* Touch Improvements */
+        /* تحسينات للشاشات الصغيرة جداً */
+        @media (max-width: 480px) {
+            .container {
+                padding: 5px;
+            }
+
+            .header {
+                padding: 10px;
+                margin-bottom: 15px;
+            }
+
+            .header h1 {
+                font-size: 1.5em;
+            }
+
+            .header p {
+                font-size: 0.9em;
+            }
+
+            .video-section,
+            .status-panel,
+            .chat-section {
+                padding: 12px;
+            }
+
+            .video-controls {
+                grid-template-columns: 1fr;
+                gap: 6px;
+            }
+
+            .control-btn {
+                padding: 10px;
+                font-size: 0.8em;
+            }
+
+            .chat-section {
+                height: 250px;
+            }
+
+            .status-panel {
+                font-size: 0.85em;
+            }
+
+            .permission-content {
+                padding: 20px 12px;
+                margin: 10px;
+                width: calc(100% - 20px);
+            }
+
+            .permission-content h2 {
+                font-size: 1.3em;
+            }
+
+            .permission-content p {
+                font-size: 0.9em;
+            }
+
+            .permission-icon {
+                font-size: 3.5em;
+            }
+        }
+
+        /* تحسينات للشاشات الأفقية على الجوال */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .video-container {
+                aspect-ratio: 16/9;
+            }
+
+            .video-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .main-content {
+                grid-template-columns: 2fr 1fr;
+                gap: 10px;
+            }
+
+            .chat-section {
+                height: 200px;
+            }
+
+            .permission-content {
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+        }
+
+        /* تحسينات اللمس */
         @media (hover: none) and (pointer: coarse) {
-            .control-btn,
-            .modal-btn,
-            .safety-btn {
-                min-height: 44px;
+            .control-btn {
+                min-height: 44px; /* الحد الأدنى لسهولة اللمس */
+                padding: 12px 16px;
             }
 
             .chat-input button {
@@ -680,14 +1129,23 @@
                 min-width: 60px;
             }
 
-            .control-btn:active,
-            .modal-btn:active,
-            .safety-btn:active {
-                transform: scale(0.98);
+            .permission-btn {
+                min-height: 48px;
+            }
+
+            /* تحسين حجم النص للقراءة */
+            .message {
+                font-size: 16px;
+                line-height: 1.4;
+            }
+
+            .chat-input input {
+                font-size: 16px;
+                min-height: 44px;
             }
         }
 
-        /* Prevent text selection and context menu on videos */
+        /* منع التحديد والسحب للجوال */
         .video-container,
         .video-box,
         video {
@@ -698,125 +1156,139 @@
             -webkit-touch-callout: none;
         }
 
-        video {
-            pointer-events: auto;
+        /* تحسين الانتقالات للجوال */
+        @media (max-width: 768px) {
+            .control-btn,
+            .permission-btn,
+            .chat-input button {
+                transition: background-color 0.2s ease;
+            }
+
+            .control-btn:active,
+            .permission-btn:active,
+            .chat-input button:active {
+                transform: scale(0.98);
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Permission Modal -->
-        <div id="permissionModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">🎥📱</div>
-                <h3>مرحباً في خمبقه!</h3>
+        <!-- نافذة طلب الإذن -->
+        <div id="permissionModal" class="permission-modal">
+            <div class="permission-content">
+                <div class="permission-icon">🎥📱</div>
+                <h2>مرحباً في خمبقه!</h2>
                 <p>نحتاج إلى إذنك للوصول إلى الكاميرا والميكروفون لبدء الدردشة المرئية.</p>
                 <p><strong>خصوصيتك مهمة لنا:</strong><br>
                 لن نحفظ أو نسجل أي محتوى من الكاميرا أو الميكروفون.</p>
-                <div class="modal-buttons">
-                    <button id="allowPermission" class="modal-btn primary">
+                <div class="permission-buttons">
+                    <button id="allowPermission" class="permission-btn allow">
                         ✅ السماح والبدء
                     </button>
-                    <button id="denyPermission" class="modal-btn secondary">
+                    <button id="denyPermission" class="permission-btn deny">
                         ❌ رفض
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- Instagram Modal -->
-        <div id="instagramModal" class="modal instagram-modal" style="display: none;">
-            <div class="modal-content instagram-content">
-                <div class="modal-header">📸</div>
-                <h3>🌟 تابعنا على انستقرام!</h3>
-                <p>للحصول على آخر التحديثات والمميزات الجديدة في خمبقه</p>
-                <div class="instagram-username">@528728_</div>
-                <div class="modal-buttons">
-                    <a href="https://instagram.com/528728_" target="_blank" rel="noopener noreferrer" 
-                       class="modal-btn instagram-btn follow" id="followBtn">
-                        🔗 متابعة
-                    </a>
-                    <button id="closeInstagramBtn" class="modal-btn instagram-btn close">
-                        ❌ إغلاق
-                    </button>
+        <!-- نافذة الانستقرام -->
+        <div id="instagramModal" class="instagram-popup" style="display: none;">
+            <div class="instagram-content">
+                <div class="instagram-inner">
+                    <div class="instagram-icon">📸</div>
+                    <h3>🌟 تابعنا على انستقرام!</h3>
+                    <p>للحصول على آخر التحديثات والمميزات الجديدة في خمبقه</p>
+                    <div class="instagram-username">@528728_</div>
+                    <div class="instagram-buttons">
+                        <a href="https://instagram.com/528728_" target="_blank" rel="noopener noreferrer" class="instagram-btn follow" id="followBtn">
+                            🔗 متابعة
+                        </a>
+                        <button id="closeInstagramBtn" class="instagram-btn close">
+                            ❌ إغلاق
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Report Modal -->
-        <div id="reportModal" class="modal" style="display: none;">
-            <div class="modal-content">
-                <div class="modal-header">🚨</div>
-                <h3>الإبلاغ عن مخالفة</h3>
-                
-                <div class="warning-banner" id="warningBanner">
-                    ⚠️ يمكنك الإبلاغ عن أي سلوك غير لائق - ستبقى هويتك مجهولة
-                </div>
-                
-                <p style="margin-bottom: 20px; color: #555; font-size: 1.1em;">اختر سبب الإبلاغ:</p>
-                
-                <div class="report-reasons">
-                    <label class="report-reason" data-reason="inappropriate_content">
-                        <input type="radio" name="reportReason" value="inappropriate_content">
-                        🔞 محتوى غير لائق أو إباحي
-                    </label>
+        <!-- نافذة التقارير -->
+        <div id="reportModal" class="report-modal" style="display: none;">
+            <div class="report-content">
+                <div class="report-inner">
+                    <div class="report-icon">🚨</div>
+                    <h3>الإبلاغ عن مخالفة</h3>
                     
-                    <label class="report-reason" data-reason="harassment">
-                        <input type="radio" name="reportReason" value="harassment">
-                        😡 تحرش أو إزعاج أو تنمر
-                    </label>
+                    <div class="warning-banner" id="warningBanner">
+                        ⚠️ يمكنك الإبلاغ عن أي سلوك غير لائق - ستبقى هويتك مجهولة
+                    </div>
                     
-                    <label class="report-reason" data-reason="spam">
-                        <input type="radio" name="reportReason" value="spam">
-                        📧 رسائل مزعجة أو إعلانات
-                    </label>
+                    <p style="margin-bottom: 20px; color: #555; font-size: 1.1em;">اختر سبب الإبلاغ:</p>
                     
-                    <label class="report-reason" data-reason="fake_profile">
-                        <input type="radio" name="reportReason" value="fake_profile">
-                        👤 هوية مزيفة أو انتحال شخصية
-                    </label>
+                    <div class="report-reasons">
+                        <label class="report-reason" data-reason="inappropriate_content">
+                            <input type="radio" name="reportReason" value="inappropriate_content" style="margin-left: 8px;">
+                            🔞 محتوى غير لائق أو إباحي
+                        </label>
+                        
+                        <label class="report-reason" data-reason="harassment">
+                            <input type="radio" name="reportReason" value="harassment" style="margin-left: 8px;">
+                            😡 تحرش أو إزعاج أو تنمر
+                        </label>
+                        
+                        <label class="report-reason" data-reason="spam">
+                            <input type="radio" name="reportReason" value="spam" style="margin-left: 8px;">
+                            📧 رسائل مزعجة أو إعلانات
+                        </label>
+                        
+                        <label class="report-reason" data-reason="fake_profile">
+                            <input type="radio" name="reportReason" value="fake_profile" style="margin-left: 8px;">
+                            👤 هوية مزيفة أو انتحال شخصية
+                        </label>
+                        
+                        <label class="report-reason" data-reason="violence">
+                            <input type="radio" name="reportReason" value="violence" style="margin-left: 8px;">
+                            ⚡ عنف أو تهديد أو إيذاء
+                        </label>
+                        
+                        <label class="report-reason" data-reason="other">
+                            <input type="radio" name="reportReason" value="other" style="margin-left: 8px;">
+                            📝 سبب آخر
+                        </label>
+                    </div>
                     
-                    <label class="report-reason" data-reason="violence">
-                        <input type="radio" name="reportReason" value="violence">
-                        ⚡ عنف أو تهديد أو إيذاء
-                    </label>
+                    <textarea id="reportDetails" class="report-textarea" placeholder="تفاصيل إضافية (اختياري)... مثل وصف ما حدث أو أي معلومات تساعد في المراجعة"></textarea>
                     
-                    <label class="report-reason" data-reason="other">
-                        <input type="radio" name="reportReason" value="other">
-                        📝 سبب آخر
-                    </label>
-                </div>
-                
-                <textarea id="reportDetails" class="report-textarea" 
-                          placeholder="تفاصيل إضافية (اختياري)... مثل وصف ما حدث أو أي معلومات تساعد في المراجعة"></textarea>
-                
-                <div class="modal-buttons">
-                    <button id="sendReportBtn" class="modal-btn danger">🚨 إرسال التقرير</button>
-                    <button id="cancelReportBtn" class="modal-btn secondary">❌ إلغاء</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Block Modal -->
-        <div id="blockModal" class="modal" style="display: none;">
-            <div class="modal-content">
-                <div class="modal-header">🚫</div>
-                <h3>تأكيد الحظر</h3>
-                <p style="color: #555; margin: 20px 0; line-height: 1.6;">
-                    هل أنت متأكد من حظر هذا المستخدم؟<br>
-                    <strong>سيتم:</strong><br>
-                    • قطع الاتصال الحالي<br>
-                    • منع التواصل معه مجدداً<br>
-                    • البحث عن شريك جديد
-                </p>
-                <div class="modal-buttons">
-                    <button id="confirmBlockBtn" class="modal-btn danger">🚫 نعم، احظره</button>
-                    <button id="cancelBlockBtn" class="modal-btn secondary">❌ إلغاء</button>
+                    <div class="report-buttons">
+                        <button id="sendReportBtn" class="report-btn send">🚨 إرسال التقرير</button>
+                        <button id="cancelReportBtn" class="report-btn cancel">❌ إلغاء</button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Main App -->
+        <!-- نافذة تأكيد الحظر -->
+        <div id="blockModal" class="block-confirmation" style="display: none;">
+            <div class="block-content">
+                <div class="block-inner">
+                    <div class="block-icon">🚫</div>
+                    <h3>تأكيد الحظر</h3>
+                    <p style="color: #555; margin: 20px 0; line-height: 1.6;">
+                        هل أنت متأكد من حظر هذا المستخدم؟<br>
+                        <strong>سيتم:</strong><br>
+                        • قطع الاتصال الحالي<br>
+                        • منع التواصل معه مجدداً<br>
+                        • البحث عن شريك جديد
+                    </p>
+                    <div class="block-buttons">
+                        <button id="confirmBlockBtn" class="report-btn send">🚫 نعم، احظره</button>
+                        <button id="cancelBlockBtn" class="report-btn cancel">❌ إلغاء</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="header">
             <h1>🎥 خمبقه</h1>
             <p>منصة الدردشة المرئية الاحترافية - تواصل مع أشخاص جدد من حول العالم</p>
@@ -870,7 +1342,7 @@
                     </button>
                 </div>
 
-                <div id="statusDiv" class="hidden">
+                <div id="statusDiv" class="loading hidden">
                     جاري التحضير...
                 </div>
             </div>
@@ -942,10 +1414,13 @@
         </div>
     </div>
 
+    <!-- Socket.io Client -->
+    <script src="/socket.io/socket.io.js"></script>
+    
     <script>
         class ChatLivePro {
             constructor() {
-                // DOM Elements
+                // عناصر DOM
                 this.startBtnEl = document.getElementById('startBtn');
                 this.nextBtnEl = document.getElementById('nextBtn');
                 this.stopBtnEl = document.getElementById('stopBtn');
@@ -961,23 +1436,23 @@
                 this.sendBtnEl = document.getElementById('sendBtn');
                 this.countrySelectEl = document.getElementById('countrySelect');
                 
-                // Permission Modal Elements
+                // عناصر طلب الإذن
                 this.permissionModalEl = document.getElementById('permissionModal');
                 this.allowPermissionEl = document.getElementById('allowPermission');
                 this.denyPermissionEl = document.getElementById('denyPermission');
                 
-                // Instagram Modal Elements
+                // عناصر انستقرام
                 this.instagramModalEl = document.getElementById('instagramModal');
                 this.followBtnEl = document.getElementById('followBtn');
                 this.closeInstagramBtnEl = document.getElementById('closeInstagramBtn');
                 
-                // Statistics Elements
+                // عناصر الإحصائيات
                 this.activeUsersEl = document.getElementById('activeUsers');
                 this.waitingUsersEl = document.getElementById('waitingUsers');
                 this.activeRoomsEl = document.getElementById('activeRooms');
                 this.connectionStatusEl = document.getElementById('connectionStatus');
 
-                // Safety Elements
+                // عناصر الأمان
                 this.reportModalEl = document.getElementById('reportModal');
                 this.blockModalEl = document.getElementById('blockModal');
                 this.reportBtnEl = document.getElementById('reportBtn');
@@ -989,7 +1464,7 @@
                 this.reportDetailsEl = document.getElementById('reportDetails');
                 this.warningBannerEl = document.getElementById('warningBanner');
 
-                // State Variables
+                // متغيرات الحالة
                 this.socket = null;
                 this.localStream = null;
                 this.peerConnection = null;
@@ -1001,7 +1476,7 @@
                 this.cameraEnabled = true;
                 this.permissionGranted = false;
 
-                // Enhanced WebRTC Configuration
+                // إعداد WebRTC محسن
                 this.peerConfig = {
                     iceServers: [
                         { urls: 'stun:stun.l.google.com:19302' },
@@ -1021,27 +1496,14 @@
                 this.checkInstagramPopup();
                 this.showPermissionModal();
                 this.startSafetyReminders();
-                this.simulateStats(); // For demo purposes
-            }
-
-            // For demo purposes - simulate server stats
-            simulateStats() {
-                const updateStats = () => {
-                    this.updateStats({
-                        activeUsers: Math.floor(Math.random() * 500) + 100,
-                        waitingUsers: Math.floor(Math.random() * 50) + 5,
-                        activeRooms: Math.floor(Math.random() * 200) + 50
-                    });
-                };
-                
-                updateStats();
-                setInterval(updateStats, 5000);
             }
 
             checkInstagramPopup() {
+                // التحقق من localStorage إذا تم عرض الانستقرام من قبل
                 const instagramShown = localStorage.getItem('khambaqah_instagram_shown');
                 
                 if (!instagramShown) {
+                    // عرض نافذة الانستقرام بعد 3 ثواني من دخول الموقع
                     setTimeout(() => {
                         this.showInstagramPopup();
                     }, 3000);
@@ -1050,8 +1512,11 @@
 
             showInstagramPopup() {
                 this.instagramModalEl.style.display = 'flex';
+                
+                // تسجيل أن النافذة تم عرضها
                 localStorage.setItem('khambaqah_instagram_shown', 'true');
                 
+                // إخفاء تلقائي بعد 15 ثانية
                 setTimeout(() => {
                     this.hideInstagramPopup();
                 }, 15000);
@@ -1063,6 +1528,8 @@
 
             showPermissionModal() {
                 this.permissionModalEl.style.display = 'flex';
+                
+                // إخفاء المحتوى الرئيسي حتى يتم منح الإذن
                 document.querySelector('.main-content').style.filter = 'blur(5px)';
                 document.querySelector('.header').style.filter = 'blur(5px)';
             }
@@ -1075,18 +1542,20 @@
 
             async requestPermissions() {
                 try {
-                    console.log('🎥 Requesting camera and microphone permissions...');
+                    console.log('🎥 طلب إذن الكاميرا والميكروفون...');
                     
+                    // طلب إذن الكاميرا والميكروفون
                     const stream = await navigator.mediaDevices.getUserMedia({
                         video: true,
                         audio: true
                     });
                     
+                    // إيقاف الستريم مؤقتاً (سنستخدمه لاحقاً)
                     stream.getTracks().forEach(track => track.stop());
                     
                     this.permissionGranted = true;
                     this.hidePermissionModal();
-                    this.simulateConnection(); // For demo
+                    this.connectToServer();
                     
                     this.addMessage('تم منح الإذن بنجاح! ✅', 'system');
                     this.addMessage('يمكنك الآن بدء الدردشة المرئية 🎥', 'system');
@@ -1094,7 +1563,7 @@
                     return true;
                     
                 } catch (error) {
-                    console.error('❌ Permission denied:', error);
+                    console.error('❌ تم رفض الإذن:', error);
                     
                     let errorMessage = 'تم رفض الإذن للكاميرا والميكروفون';
                     
@@ -1112,18 +1581,10 @@
                 }
             }
 
-            // Simulate connection for demo
-            simulateConnection() {
-                this.isConnected = true;
-                this.connectionStatusEl.textContent = 'متصل';
-                this.connectionStatusEl.style.color = '#27ae60';
-                this.isRegistered = true;
-                this.userId = 'demo-user-' + Math.random().toString(36).substr(2, 9);
-            }
-
             setupEventListeners() {
-                // Permission buttons
+                // أزرار طلب الإذن
                 this.allowPermissionEl.addEventListener('click', async () => {
+                    // منع النقر المتعدد
                     this.allowPermissionEl.disabled = true;
                     this.allowPermissionEl.textContent = '⏳ جاري طلب الإذن...';
                     
@@ -1139,9 +1600,10 @@
                     alert('❌ لا يمكن استخدام خمبقه بدون إذن الكاميرا والميكروفون');
                 });
 
-                // Instagram buttons
+                // أزرار انستقرام
                 this.followBtnEl.addEventListener('click', () => {
-                    console.log('📸 Instagram follow clicked');
+                    // تتبع النقر على زر المتابعة
+                    console.log('📸 تم النقر على متابعة انستقرام');
                     this.addMessage('شكراً لمتابعتنا على انستقرام! 🌟', 'system');
                     setTimeout(() => {
                         this.hideInstagramPopup();
@@ -1152,7 +1614,7 @@
                     this.hideInstagramPopup();
                 });
 
-                // Safety buttons
+                // أزرار الأمان
                 this.reportBtnEl.addEventListener('click', () => {
                     this.showReportModal();
                 });
@@ -1177,7 +1639,7 @@
                     this.hideBlockModal();
                 });
 
-                // Report reason selection
+                // اختيار سبب التقرير
                 document.querySelectorAll('.report-reason').forEach(reason => {
                     reason.addEventListener('click', () => {
                         document.querySelectorAll('.report-reason').forEach(r => r.classList.remove('selected'));
@@ -1186,16 +1648,21 @@
                     });
                 });
 
-                // Close modals when clicking outside
-                [this.reportModalEl, this.blockModalEl].forEach(modal => {
-                    modal.addEventListener('click', (e) => {
-                        if (e.target === modal) {
-                            modal.style.display = 'none';
-                        }
-                    });
+                // إغلاق نافذة التقرير عند النقر خارجها
+                this.reportModalEl.addEventListener('click', (e) => {
+                    if (e.target === this.reportModalEl) {
+                        this.hideReportModal();
+                    }
                 });
 
-                // Control buttons
+                // إغلاق نافذة الحظر عند النقر خارجها
+                this.blockModalEl.addEventListener('click', (e) => {
+                    if (e.target === this.blockModalEl) {
+                        this.hideBlockModal();
+                    }
+                });
+
+                // أزرار التحكم مع تحسين اللمس
                 this.startBtnEl.addEventListener('click', (e) => {
                     e.preventDefault();
                     this.startChat();
@@ -1221,7 +1688,7 @@
                     this.toggleCamera();
                 });
 
-                // Chat functionality
+                // الدردشة النصية مع تحسين للجوال
                 this.sendBtnEl.addEventListener('click', (e) => {
                     e.preventDefault();
                     this.sendMessage();
@@ -1234,11 +1701,115 @@
                     }
                 });
 
-                // Prevent drag on videos
-                [this.localVideoEl, this.remoteVideoEl].forEach(video => {
-                    video.addEventListener('dragstart', (e) => e.preventDefault());
-                    video.addEventListener('contextmenu', (e) => e.preventDefault());
-                });
+                // منع السحب للصور والفيديوهات على الجوال
+                this.localVideoEl.addEventListener('dragstart', (e) => e.preventDefault());
+                this.remoteVideoEl.addEventListener('dragstart', (e) => e.preventDefault());
+                
+                // منع القائمة السياقية على الفيديوهات
+                this.localVideoEl.addEventListener('contextmenu', (e) => e.preventDefault());
+                this.remoteVideoEl.addEventListener('contextmenu', (e) => e.preventDefault());
+            }
+
+            connectToServer() {
+                if (!this.permissionGranted) {
+                    console.log('⏳ انتظار إذن الكاميرا والميكروفون...');
+                    return;
+                }
+
+                try {
+                    this.socket = io();
+                    
+                    this.socket.on('connect', () => {
+                        console.log('✅ متصل بالسيرفر');
+                        this.isConnected = true;
+                        this.connectionStatusEl.textContent = 'متصل';
+                        this.connectionStatusEl.style.color = '#27ae60';
+                        this.registerUser();
+                    });
+
+                    this.socket.on('disconnect', () => {
+                        console.log('❌ انقطع الاتصال');
+                        this.isConnected = false;
+                        this.connectionStatusEl.textContent = 'غير متصل';
+                        this.connectionStatusEl.style.color = '#e74c3c';
+                        this.handleDisconnection();
+                    });
+
+                    this.socket.on('registration-success', (data) => {
+                        console.log('✅ تم التسجيل بنجاح');
+                        this.isRegistered = true;
+                        this.userId = data.userId;
+                        this.showSuccess(data.message);
+                    });
+
+                    this.socket.on('registration-error', (data) => {
+                        console.log('❌ خطأ في التسجيل');
+                        this.showError(data.message);
+                    });
+
+                    this.socket.on('waiting-for-partner', (data) => {
+                        console.log('⏳ في انتظار شريك');
+                        this.showStatus(`${data.message} (${data.waitingCount} في الانتظار)`);
+                        this.remotePlaceholderEl.innerHTML = '<i>⏳</i><span>جاري البحث عن شريك...</span>';
+                    });
+
+                    this.socket.on('partner-found', (data) => {
+                        console.log('🎉 تم العثور على شريك');
+                        this.currentRoom = data.roomId;
+                        this.showSuccess(data.message);
+                        this.enableChatControls();
+                        this.remotePlaceholderEl.innerHTML = '<i>🔄</i><span>جاري الاتصال...</span>';
+                        
+                        // تأخير صغير ثم بدء WebRTC
+                        setTimeout(() => {
+                            this.createAndSendOffer();
+                        }, 1000);
+                    });
+
+                    this.socket.on('partner-left', (data) => {
+                        console.log('👋 غادر الشريك');
+                        this.showError(data.message);
+                        this.handlePartnerDisconnection();
+                    });
+
+                    this.socket.on('receive-message', (data) => {
+                        this.addMessage(data.message, 'other');
+                    });
+
+                    this.socket.on('server-stats', (stats) => {
+                        this.updateStats(stats);
+                    });
+
+                    // WebRTC Events
+                    this.socket.on('webrtc-offer', (data) => {
+                        this.handleWebRTCOffer(data);
+                    });
+
+                    this.socket.on('webrtc-answer', (data) => {
+                        this.handleWebRTCAnswer(data);
+                    });
+
+                    this.socket.on('webrtc-ice-candidate', (data) => {
+                        this.handleWebRTCIceCandidate(data);
+                    });
+
+                    this.socket.on('error', (data) => {
+                        this.showError(data.message);
+                    });
+
+                } catch (error) {
+                    console.error('❌ خطأ في الاتصال:', error);
+                    this.showError('فشل في الاتصال بالسيرفر');
+                }
+            }
+
+            registerUser() {
+                const userData = {
+                    country: this.countrySelectEl.value,
+                    interests: []
+                };
+
+                this.socket.emit('register-user', userData);
             }
 
             async startChat() {
@@ -1250,6 +1821,7 @@
                 try {
                     this.showStatus('جاري تشغيل الكاميرا والميكروفون...');
                     
+                    // إعدادات مختلفة للجوال والكمبيوتر
                     const isMobile = window.mobileDevice || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
                     
                     const constraints = {
@@ -1267,6 +1839,7 @@
                         }
                     };
                     
+                    // طلب إذن الكاميرا والميكروفون مع الإعدادات المحسنة
                     this.localStream = await navigator.mediaDevices.getUserMedia(constraints);
 
                     this.localVideoEl.srcObject = this.localStream;
@@ -1279,12 +1852,12 @@
                     this.micBtnEl.disabled = false;
                     this.cameraBtnEl.disabled = false;
 
-                    // Simulate finding partner
-                    this.simulateFindPartner();
+                    // البحث عن شريك
+                    this.socket.emit('find-partner');
                     this.showStatus('جاري البحث عن شريك...');
 
                 } catch (error) {
-                    console.error('❌ Camera access error:', error);
+                    console.error('❌ خطأ في الوصول للكاميرا:', error);
                     
                     let errorMessage = 'لا يمكن الوصول للكاميرا أو الميكروفون';
                     
@@ -1302,69 +1875,28 @@
                 }
             }
 
-            // Simulate finding partner for demo
-            simulateFindPartner() {
-                this.showStatus('جاري البحث عن شريك...');
-                this.remotePlaceholderEl.innerHTML = '<i>⏳</i><span>جاري البحث عن شريك...</span>';
-                
-                setTimeout(() => {
-                    this.currentRoom = 'demo-room-' + Math.random().toString(36).substr(2, 9);
-                    this.showSuccess('تم العثور على شريك! 🎉');
-                    this.enableChatControls();
-                    this.remotePlaceholderEl.innerHTML = '<i>🔄</i><span>جاري الاتصال...</span>';
-                    
-                    // Simulate video connection
-                    setTimeout(() => {
-                        this.simulatePartnerVideo();
-                    }, 2000);
-                }, 3000);
-            }
-
-            // Simulate partner video for demo
-            simulatePartnerVideo() {
-                // Create a canvas with animated content to simulate partner video
-                const canvas = document.createElement('canvas');
-                canvas.width = 640;
-                canvas.height = 480;
-                const ctx = canvas.getContext('2d');
-                
-                const animate = () => {
-                    ctx.fillStyle = `hsl(${Date.now() * 0.1 % 360}, 50%, 50%)`;
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    
-                    ctx.fillStyle = 'white';
-                    ctx.font = '40px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.fillText('🎭 شريك تجريبي', canvas.width / 2, canvas.height / 2);
-                    
-                    requestAnimationFrame(animate);
-                };
-                animate();
-                
-                const stream = canvas.captureStream(30);
-                this.remoteVideoEl.srcObject = stream;
-                this.remoteVideoEl.style.display = 'block';
-                this.remotePlaceholderEl.style.display = 'none';
-                
-                this.showSuccess('تم الاتصال بالشريك بنجاح! 🎉');
-            }
-
             findNewPartner() {
-                console.log('🔍 Finding new partner...');
+                console.log('🔍 البحث عن شريك جديد...');
                 this.showStatus('جاري البحث عن شريك جديد...');
                 this.remotePlaceholderEl.innerHTML = '<i>⏳</i><span>جاري البحث...</span>';
                 this.remotePlaceholderEl.style.display = 'flex';
                 this.remoteVideoEl.style.display = 'none';
                 
+                // إغلاق الاتصال الحالي
+                if (this.peerConnection) {
+                    console.log('🔌 إغلاق WebRTC الحالي...');
+                    this.peerConnection.close();
+                    this.peerConnection = null;
+                }
+                
                 this.currentRoom = null;
                 this.disableChatControls();
-                
-                // Simulate finding new partner
-                this.simulateFindPartner();
+                this.socket.emit('find-partner');
             }
 
             stopChat() {
                 this.cleanup();
+                this.socket.emit('leave-chat');
                 
                 this.startBtnEl.disabled = false;
                 this.nextBtnEl.disabled = true;
@@ -1383,6 +1915,7 @@
                     });
                 }
                 
+                // تحديث النص حسب حجم الشاشة
                 const isMobile = window.innerWidth <= 768;
                 const micText = isMobile ? 'صوت' : 'الميكروفون';
                 const mutedText = isMobile ? 'كتم' : 'كتم الصوت';
@@ -1392,6 +1925,10 @@
                     `🔇 <span class="desktop-text">${mutedText}</span><span class="mobile-text">كتم</span>`;
                     
                 this.micBtnEl.style.background = this.micEnabled ? '#667eea' : '#e74c3c';
+                
+                if (this.socket && this.currentRoom) {
+                    this.socket.emit('toggle-audio', { isEnabled: this.micEnabled });
+                }
             }
 
             toggleCamera() {
@@ -1403,6 +1940,7 @@
                     });
                 }
                 
+                // تحديث النص حسب حجم الشاشة
                 const isMobile = window.innerWidth <= 768;
                 const cameraText = isMobile ? 'فيديو' : 'الكاميرا';
                 const offText = isMobile ? 'مغلق' : 'إيقاف الكاميرا';
@@ -1412,27 +1950,19 @@
                     `📷 <span class="desktop-text">${offText}</span><span class="mobile-text">مغلق</span>`;
                     
                 this.cameraBtnEl.style.background = this.cameraEnabled ? '#667eea' : '#e74c3c';
+                
+                if (this.socket && this.currentRoom) {
+                    this.socket.emit('toggle-video', { isEnabled: this.cameraEnabled });
+                }
             }
 
             sendMessage() {
                 const message = this.messageInputEl.value.trim();
                 if (!message || !this.currentRoom) return;
 
+                this.socket.emit('send-message', { message });
                 this.addMessage(message, 'own');
                 this.messageInputEl.value = '';
-                
-                // Simulate partner response
-                setTimeout(() => {
-                    const responses = [
-                        'أهلاً وسهلاً! 👋',
-                        'كيف حالك؟ 😊',
-                        'سعيد بالتحدث معك! 🎉',
-                        'من أي بلد أنت؟ 🌍',
-                        'الطقس جميل اليوم! ☀️'
-                    ];
-                    const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-                    this.addMessage(randomResponse, 'other');
-                }, 1000 + Math.random() * 2000);
             }
 
             addMessage(text, type) {
@@ -1445,11 +1975,18 @@
             }
 
             showStatus(message) {
-                this.statusDivEl.innerHTML = `<div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
-                    <span style="font-size: 1.5em; animation: pulse 1s infinite;">⏳</span>
-                    <span>${message}</span>
-                </div>`;
+                this.statusDivEl.textContent = message;
                 this.statusDivEl.className = 'loading';
+                this.statusDivEl.classList.remove('hidden');
+                
+                setTimeout(() => {
+                    this.statusDivEl.classList.add('hidden');
+                }, 3000);
+            }
+
+            showError(message) {
+                this.statusDivEl.textContent = message;
+                this.statusDivEl.className = 'error';
                 this.statusDivEl.classList.remove('hidden');
                 
                 setTimeout(() => {
@@ -1457,40 +1994,14 @@
                 }, 5000);
             }
 
-            showError(message) {
-                this.statusDivEl.innerHTML = `<div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
-                    <span style="font-size: 1.5em;">⚠️</span>
-                    <span>${message}</span>
-                </div>`;
-                this.statusDivEl.className = 'error';
-                this.statusDivEl.classList.remove('hidden');
-                
-                this.statusDivEl.style.animation = 'shake 0.5s ease-in-out';
-                setTimeout(() => {
-                    this.statusDivEl.style.animation = '';
-                }, 500);
-                
-                setTimeout(() => {
-                    this.statusDivEl.classList.add('hidden');
-                }, 6000);
-            }
-
             showSuccess(message) {
-                this.statusDivEl.innerHTML = `<div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
-                    <span style="font-size: 1.5em;">✅</span>
-                    <span>${message}</span>
-                </div>`;
+                this.statusDivEl.textContent = message;
                 this.statusDivEl.className = 'success';
                 this.statusDivEl.classList.remove('hidden');
                 
-                this.statusDivEl.style.animation = 'pulse 0.6s ease-in-out';
-                setTimeout(() => {
-                    this.statusDivEl.style.animation = '';
-                }, 600);
-                
                 setTimeout(() => {
                     this.statusDivEl.classList.add('hidden');
-                }, 4000);
+                }, 3000);
             }
 
             enableChatControls() {
@@ -1513,63 +2024,177 @@
                 this.activeRoomsEl.textContent = stats.activeRooms;
             }
 
-            // Safety Functions
-            showReportModal() {
-                if (!this.currentRoom) {
-                    this.showError('يجب أن تكون في محادثة لتقديم تقرير');
-                    return;
+            // WebRTC Functions
+            async initializeWebRTC() {
+                try {
+                    console.log('🔄 إنشاء اتصال WebRTC...');
+                    
+                    this.peerConnection = new RTCPeerConnection(this.peerConfig);
+
+                    // إضافة الستريم المحلي أولاً
+                    if (this.localStream) {
+                        console.log('📹 إضافة الستريم المحلي...');
+                        this.localStream.getTracks().forEach(track => {
+                            console.log('🎵 إضافة track:', track.kind);
+                            this.peerConnection.addTrack(track, this.localStream);
+                        });
+                    }
+
+                    // معالجة الستريم البعيد
+                    this.peerConnection.ontrack = (event) => {
+                        console.log('📺 تم استقبال الستريم البعيد:', event.streams.length);
+                        if (event.streams && event.streams[0]) {
+                            console.log('🎥 عرض فيديو الشريك...');
+                            this.remoteVideoEl.srcObject = event.streams[0];
+                            this.remoteVideoEl.style.display = 'block';
+                            this.remotePlaceholderEl.style.display = 'none';
+                            
+                            // التأكد من تشغيل الفيديو
+                            this.remoteVideoEl.play().catch(e => {
+                                console.log('⚠️ تحذير تشغيل الفيديو:', e);
+                            });
+                        }
+                    };
+
+                    // معالجة ICE candidates
+                    this.peerConnection.onicecandidate = (event) => {
+                        if (event.candidate) {
+                            console.log('🧊 إرسال ICE candidate');
+                            this.socket.emit('webrtc-ice-candidate', {
+                                candidate: event.candidate
+                            });
+                        }
+                    };
+
+                    // معالجة تغيير حالة الاتصال
+                    this.peerConnection.onconnectionstatechange = () => {
+                        console.log('🔗 حالة الاتصال:', this.peerConnection.connectionState);
+                        
+                        if (this.peerConnection.connectionState === 'connected') {
+                            this.showSuccess('تم الاتصال بالشريك بنجاح! 🎉');
+                        } else if (this.peerConnection.connectionState === 'disconnected') {
+                            this.showError('انقطع الاتصال مع الشريك');
+                        } else if (this.peerConnection.connectionState === 'failed') {
+                            this.showError('فشل في الاتصال مع الشريك');
+                            this.retryConnection();
+                        }
+                    };
+
+                    // معالجة حالة ICE
+                    this.peerConnection.oniceconnectionstatechange = () => {
+                        console.log('🧊 حالة ICE:', this.peerConnection.iceConnectionState);
+                    };
+
+                    console.log('✅ تم إعداد WebRTC بنجاح');
+
+                } catch (error) {
+                    console.error('❌ خطأ في WebRTC:', error);
+                    this.showError('خطأ في إعداد الاتصال المرئي');
                 }
-                
-                this.reportModalEl.style.display = 'flex';
-                
-                // Clear previous selection
-                document.querySelectorAll('.report-reason').forEach(r => {
-                    r.classList.remove('selected');
-                    r.querySelector('input').checked = false;
-                });
-                this.reportDetailsEl.value = '';
-                
-                // Focus on first option
-                setTimeout(() => {
-                    document.querySelector('.report-reason input').focus();
-                }, 100);
             }
 
-            hideReportModal() {
-                this.reportModalEl.style.display = 'none';
-            }
+            async handleWebRTCOffer(data) {
+                try {
+                    console.log('📞 استقبال عرض WebRTC من:', data.senderId);
+                    
+                    if (!this.peerConnection) {
+                        console.log('🔄 إنشاء WebRTC جديد للاستقبال...');
+                        await this.initializeWebRTC();
+                    }
 
-            showBlockModal() {
-                if (!this.currentRoom) {
-                    this.showError('يجب أن تكون في محادثة لحظر مستخدم');
-                    return;
+                    // تعيين الوصف البعيد
+                    await this.peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+                    console.log('✅ تم تعيين Remote Description');
+
+                    // إنشاء الإجابة
+                    const answer = await this.peerConnection.createAnswer();
+                    await this.peerConnection.setLocalDescription(answer);
+                    console.log('✅ تم إنشاء الإجابة');
+                    
+                    // إرسال الإجابة
+                    this.socket.emit('webrtc-answer', { answer });
+                    console.log('📤 تم إرسال الإجابة');
+
+                } catch (error) {
+                    console.error('❌ خطأ في معالجة WebRTC offer:', error);
+                    this.showError('خطأ في استقبال المكالمة');
                 }
-                
-                this.blockModalEl.style.display = 'flex';
             }
 
-            hideBlockModal() {
-                this.blockModalEl.style.display = 'none';
+            async handleWebRTCAnswer(data) {
+                try {
+                    console.log('📞 استقبال إجابة WebRTC من:', data.senderId);
+                    
+                    if (this.peerConnection && data.answer) {
+                        await this.peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+                        console.log('✅ تم تعيين Remote Description للإجابة');
+                    }
+                } catch (error) {
+                    console.error('❌ خطأ في معالجة WebRTC answer:', error);
+                    this.showError('خطأ في استقبال الإجابة');
+                }
             }
 
-            sendReport() {
-                const selectedReason = document.querySelector('input[name="reportReason"]:checked');
-                
-                if (!selectedReason) {
-                    // Visual shake effect
-                    document.querySelectorAll('.report-reason').forEach(r => {
-                        r.style.animation = 'shake 0.5s ease-in-out';
-                        setTimeout(() => r.style.animation = '', 500);
+            async handleWebRTCIceCandidate(data) {
+                try {
+                    if (this.peerConnection && data.candidate) {
+                        await this.peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+                        console.log('🧊 تم إضافة ICE candidate');
+                    }
+                } catch (error) {
+                    console.error('❌ خطأ في معالجة ICE candidate:', error);
+                    // لا نظهر خطأ للمستخدم هنا لأنه طبيعي أحياناً
+                }
+            }
+
+            async createAndSendOffer() {
+                try {
+                    if (!this.peerConnection) {
+                        await this.initializeWebRTC();
+                    }
+
+                    console.log('📞 إنشاء عرض WebRTC...');
+                    
+                    // إنشاء العرض
+                    const offer = await this.peerConnection.createOffer({
+                        offerToReceiveAudio: true,
+                        offerToReceiveVideo: true
                     });
                     
-                    this.showError('يرجى اختيار سبب التقرير أولاً');
-                    return;
+                    await this.peerConnection.setLocalDescription(offer);
+                    console.log('✅ تم إنشاء العرض');
+                    
+                    // إرسال العرض
+                    this.socket.emit('webrtc-offer', { offer });
+                    console.log('📤 تم إرسال العرض');
+
+                } catch (error) {
+                    console.error('❌ خطأ في إنشاء العرض:', error);
+                    this.showError('خطأ في بدء المكالمة');
                 }
+            }
+
+            // وظائف مساعدة للمطورين
+            resetInstagramPopup() {
+                localStorage.removeItem('khambaqah_instagram_shown');
+                console.log('✅ تم إعادة تعيين نافذة الانستقرام - ستظهر في الزيارة القادمة');
+            }
+
+            forceShowInstagram() {
+                this.showInstagramPopup();
+                console.log('📸 تم إظهار نافذة الانستقرام بالقوة');
+            }
+
+            retryConnection() {
+                console.log('🔄 إعادة محاولة الاتصال...');
                 
-                // Loading effect
-                this.sendReportBtnEl.innerHTML = '⏳ جاري الإرسال...';
-                this.sendReportBtnEl.disabled = true;
-                
+                setTimeout(() => {
+                    if (this.currentRoom && this.localStream) {
+                        this.createAndSendOffer();
+                    }
+                }, 2000);
+            }
+
                 const reportData = {
                     reason: selectedReason.value,
                     details: this.reportDetailsEl.value.trim(),
@@ -1578,60 +2203,80 @@
                     reporterCountry: this.countrySelectEl.value
                 };
                 
-                // Simulate report submission
-                setTimeout(() => {
-                    this.addMessage('تم إرسال التقرير بنجاح ✅', 'system');
-                    this.hideReportModal();
+                if (this.socket && this.currentRoom) {
+                    this.socket.emit('submit-report', reportData);
                     
+                    // رسائل تأكيد متدرجة
+                    setTimeout(() => {
+                        this.addMessage('تم إرسال التقرير بنجاح ✅', 'system');
+                        this.hideReportModal();
+                        
+                        // إعادة تعيين الزر
+                        this.sendReportBtnEl.innerHTML = '🚨 إرسال التقرير';
+                        this.sendReportBtnEl.disabled = false;
+                    }, 1000);
+                    
+                    setTimeout(() => {
+                        this.addMessage('سيتم مراجعة التقرير خلال 24 ساعة 📋', 'system');
+                    }, 2500);
+                    
+                    setTimeout(() => {
+                        this.addMessage('شكراً لمساعدتك في جعل خمبقه مكاناً آمناً للجميع 🛡️', 'system');
+                    }, 4000);
+                    
+                    console.log('🚨 تم إرسال تقرير:', reportData.reason);
+                    
+                } else {
+                    this.showError('لا يمكن إرسال التقرير حالياً - يرجى المحاولة لاحقاً');
                     this.sendReportBtnEl.innerHTML = '🚨 إرسال التقرير';
                     this.sendReportBtnEl.disabled = false;
-                }, 1000);
-                
-                setTimeout(() => {
-                    this.addMessage('سيتم مراجعة التقرير خلال 24 ساعة 📋', 'system');
-                }, 2500);
-                
-                setTimeout(() => {
-                    this.addMessage('شكراً لمساعدتك في جعل خمبقه مكاناً آمناً للجميع 🛡️', 'system');
-                }, 4000);
-                
-                console.log('🚨 Report sent:', reportData.reason);
+                }
             }
 
             confirmBlockUser() {
+                // تأثير التحميل
                 this.confirmBlockBtnEl.innerHTML = '⏳ جاري الحظر...';
                 this.confirmBlockBtnEl.disabled = true;
                 
-                // Simulate block action
-                setTimeout(() => {
-                    this.addMessage('تم حظر المستخدم بنجاح ✅', 'system');
-                    this.hideBlockModal();
+                if (this.socket && this.currentRoom) {
+                    this.socket.emit('block-user', { roomId: this.currentRoom });
                     
+                    setTimeout(() => {
+                        this.addMessage('تم حظر المستخدم بنجاح ✅', 'system');
+                        this.hideBlockModal();
+                        
+                        // إعادة تعيين الزر
+                        this.confirmBlockBtnEl.innerHTML = '🚫 نعم، احظره';
+                        this.confirmBlockBtnEl.disabled = false;
+                    }, 1000);
+                    
+                    setTimeout(() => {
+                        this.addMessage('جاري البحث عن شريك جديد... 🔍', 'system');
+                        this.findNewPartner();
+                    }, 2500);
+                    
+                    console.log('🚫 تم حظر المستخدم في الغرفة:', this.currentRoom);
+                    
+                } else {
+                    this.showError('لا يمكن حظر المستخدم حالياً');
                     this.confirmBlockBtnEl.innerHTML = '🚫 نعم، احظره';
                     this.confirmBlockBtnEl.disabled = false;
-                }, 1000);
-                
-                setTimeout(() => {
-                    this.addMessage('جاري البحث عن شريك جديد... 🔍', 'system');
-                    this.findNewPartner();
-                }, 2500);
-                
-                console.log('🚫 User blocked in room:', this.currentRoom);
+                }
             }
 
-            // Enhanced safety reminders
+            // تذكيرات الأمان المحسنة
             startSafetyReminders() {
-                // Welcome reminder
+                // تذكير ترحيبي
                 setTimeout(() => {
                     this.addMessage('💡 نصيحة: استخدم أزرار الإبلاغ والحظر عند الحاجة', 'system');
-                }, 30000); // After 30 seconds
+                }, 30000); // بعد 30 ثانية
 
-                // Periodic reminders
+                // تذكيرات دورية
                 setInterval(() => {
                     if (this.currentRoom) {
                         this.showSafetyReminder();
                     }
-                }, 8 * 60 * 1000); // Every 8 minutes
+                }, 8 * 60 * 1000); // كل 8 دقائق
             }
 
             showSafetyReminder() {
@@ -1649,14 +2294,72 @@
                 this.addMessage(randomReminder, 'system');
             }
 
+            // تحسين رسائل الأخطاء
+            showError(message) {
+                this.statusDivEl.innerHTML = `<div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <span style="font-size: 1.5em;">⚠️</span>
+                    <span>${message}</span>
+                </div>`;
+                this.statusDivEl.className = 'error';
+                this.statusDivEl.classList.remove('hidden');
+                
+                // اهتزاز بصري
+                this.statusDivEl.style.animation = 'shake 0.5s ease-in-out';
+                setTimeout(() => {
+                    this.statusDivEl.style.animation = '';
+                }, 500);
+                
+                setTimeout(() => {
+                    this.statusDivEl.classList.add('hidden');
+                }, 6000);
+            }
+
+            showSuccess(message) {
+                this.statusDivEl.innerHTML = `<div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <span style="font-size: 1.5em;">✅</span>
+                    <span>${message}</span>
+                </div>`;
+                this.statusDivEl.className = 'success';
+                this.statusDivEl.classList.remove('hidden');
+                
+                // تأثير النجاح
+                this.statusDivEl.style.animation = 'pulse 0.6s ease-in-out';
+                setTimeout(() => {
+                    this.statusDivEl.style.animation = '';
+                }, 600);
+                
+                setTimeout(() => {
+                    this.statusDivEl.classList.add('hidden');
+                }, 4000);
+            }
+
+            showStatus(message) {
+                this.statusDivEl.innerHTML = `<div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <span style="font-size: 1.5em; animation: pulse 1s infinite;">⏳</span>
+                    <span>${message}</span>
+                </div>`;
+                this.statusDivEl.className = 'loading';
+                this.statusDivEl.classList.remove('hidden');
+                
+                setTimeout(() => {
+                    this.statusDivEl.classList.add('hidden');
+                }, 5000);
+            }
+
             cleanup() {
-                // Stop local stream
+                // إيقاف WebRTC
+                if (this.peerConnection) {
+                    this.peerConnection.close();
+                    this.peerConnection = null;
+                }
+
+                // إيقاف الفيديو المحلي
                 if (this.localStream) {
                     this.localStream.getTracks().forEach(track => track.stop());
                     this.localStream = null;
                 }
 
-                // Hide videos
+                // إخفاء الفيديوهات
                 this.localVideoEl.style.display = 'none';
                 this.remoteVideoEl.style.display = 'none';
                 this.localPlaceholderEl.style.display = 'flex';
@@ -1664,21 +2367,35 @@
                 this.currentRoom = null;
             }
 
-            // Helper functions for developers
-            resetInstagramPopup() {
-                localStorage.removeItem('khambaqah_instagram_shown');
-                console.log('✅ Instagram popup reset - will show on next visit');
+            handlePartnerDisconnection() {
+                // إيقاف WebRTC
+                if (this.peerConnection) {
+                    this.peerConnection.close();
+                    this.peerConnection = null;
+                }
+
+                // إخفاء فيديو الشريك
+                this.remoteVideoEl.style.display = 'none';
+                this.remotePlaceholderEl.style.display = 'flex';
+                this.currentRoom = null;
+                this.disableChatControls();
             }
 
-            forceShowInstagram() {
-                this.showInstagramPopup();
-                console.log('📸 Instagram popup shown forcefully');
+            handleDisconnection() {
+                this.cleanup();
+                this.isConnected = false;
+                this.isRegistered = false;
+                this.userId = null;
+                this.startBtnEl.disabled = false;
+                this.nextBtnEl.disabled = true;
+                this.stopBtnEl.disabled = true;
+                this.disableChatControls();
             }
         }
 
-        // Initialize app with mobile optimizations
+        // تشغيل التطبيق مع تحسينات الجوال
         document.addEventListener('DOMContentLoaded', () => {
-            // Prevent double-tap zoom on iOS
+            // منع الزوم المزدوج على iOS
             let lastTouchEnd = 0;
             document.addEventListener('touchend', function (event) {
                 const now = (new Date()).getTime();
@@ -1688,26 +2405,23 @@
                 lastTouchEnd = now;
             }, false);
 
-            // Prevent drag on mobile
+            // منع السحب والإفلات على الجوال
             document.addEventListener('touchmove', function(e) {
                 if (e.target.tagName === 'VIDEO' || e.target.closest('.video-container')) {
                     e.preventDefault();
                 }
             }, { passive: false });
 
-            // Mobile device detection
+            // تحسين الأداء للجوال
             if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                // تقليل جودة الفيديو للجوال لتحسين الأداء
                 window.mobileDevice = true;
                 document.body.classList.add('mobile-device');
             }
 
-            // Create and store app instance globally
+            // إنشاء التطبيق وحفظه كمتغير عام
             window.app = new ChatLivePro();
         });
-
-        // Global functions for easy access
-        window.resetInstagramPopup = () => window.app.resetInstagramPopup();
-        window.showInstagram = () => window.app.forceShowInstagram();
     </script>
 </body>
 </html>
