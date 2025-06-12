@@ -2,7 +2,11 @@
 <html dir="rtl" lang="ar">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#667eea">
+    <meta name="description" content="خمبقه - منصة الدردشة المرئية الاحترافية">
     <title>خمبقه - دردشة فيديو مباشرة</title>
     <style>
         * {
@@ -397,7 +401,27 @@
             100% { transform: scale(1); }
         }
 
+        .mobile-text {
+            display: none;
+        }
+
+        .desktop-text {
+            display: inline;
+        }
+
+        /* تحسينات الجوال */
         @media (max-width: 768px) {
+            .mobile-text {
+                display: inline;
+            }
+
+            .desktop-text {
+                display: none;
+            }
+            .container {
+                padding: 10px;
+            }
+
             .main-content {
                 grid-template-columns: 1fr;
                 gap: 15px;
@@ -405,24 +429,290 @@
             
             .video-grid {
                 grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .video-container {
+                aspect-ratio: 4/3; /* نسبة أفضل للجوال */
             }
             
+            .header {
+                padding: 15px;
+                margin-bottom: 20px;
+            }
+
             .header h1 {
-                font-size: 2em;
+                font-size: 1.8em;
+                margin-bottom: 8px;
+            }
+
+            .header p {
+                font-size: 1em;
+                line-height: 1.4;
             }
             
+            .video-controls {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                margin-top: 10px;
+            }
+
             .control-btn {
-                padding: 10px 16px;
+                padding: 12px 8px;
+                font-size: 0.85em;
+                border-radius: 20px;
+            }
+
+            /* جعل أزرار البدء والإيقاف تأخذ العرض الكامل */
+            .control-btn:nth-child(1),
+            .control-btn:nth-child(3) {
+                grid-column: 1 / -1;
+            }
+
+            .video-section {
+                padding: 15px;
+            }
+
+            .sidebar {
+                gap: 15px;
+            }
+
+            .status-panel {
+                padding: 15px;
+            }
+
+            .chat-section {
+                height: 300px;
+                padding: 15px;
+            }
+
+            .chat-messages {
+                font-size: 0.9em;
+                padding: 10px;
+            }
+
+            .message {
+                padding: 6px 10px;
+                font-size: 0.9em;
+                margin-bottom: 8px;
+            }
+
+            .chat-input input {
+                padding: 10px;
+                font-size: 16px; /* منع الزوم في iOS */
+            }
+
+            .chat-input button {
+                padding: 10px 15px;
                 font-size: 0.9em;
             }
 
+            .country-select select {
+                padding: 12px;
+                font-size: 16px; /* منع الزوم في iOS */
+            }
+
+            .status-panel h3 {
+                font-size: 1.1em;
+                margin-bottom: 12px;
+            }
+
+            .status-item {
+                font-size: 0.9em;
+                padding: 6px 0;
+            }
+
+            /* تحسين نافذة الإذن للجوال */
             .permission-content {
-                padding: 30px 20px;
+                padding: 25px 15px;
+                margin: 20px;
+                max-width: none;
+                width: calc(100% - 40px);
+            }
+
+            .permission-content h2 {
+                font-size: 1.5em;
+                margin-bottom: 15px;
+            }
+
+            .permission-content p {
+                font-size: 1em;
+                margin-bottom: 20px;
+                line-height: 1.5;
+            }
+
+            .permission-icon {
+                font-size: 4em;
+                margin-bottom: 15px;
             }
 
             .permission-buttons {
                 flex-direction: column;
-                align-items: center;
+                gap: 12px;
+                align-items: stretch;
+            }
+
+            .permission-btn {
+                padding: 15px 20px;
+                font-size: 1em;
+                width: 100%;
+            }
+
+            /* إخفاء النص الطويل في الأزرار على الجوال */
+            .control-btn span.desktop-text {
+                display: none;
+            }
+
+            /* تحسين الفيديو للجوال */
+            .video-placeholder {
+                font-size: 1em;
+            }
+
+            .video-placeholder i {
+                font-size: 2.5em;
+                margin-bottom: 8px;
+            }
+        }
+
+        /* تحسينات للشاشات الصغيرة جداً */
+        @media (max-width: 480px) {
+            .container {
+                padding: 5px;
+            }
+
+            .header {
+                padding: 10px;
+                margin-bottom: 15px;
+            }
+
+            .header h1 {
+                font-size: 1.5em;
+            }
+
+            .header p {
+                font-size: 0.9em;
+            }
+
+            .video-section,
+            .status-panel,
+            .chat-section {
+                padding: 12px;
+            }
+
+            .video-controls {
+                grid-template-columns: 1fr;
+                gap: 6px;
+            }
+
+            .control-btn {
+                padding: 10px;
+                font-size: 0.8em;
+            }
+
+            .chat-section {
+                height: 250px;
+            }
+
+            .status-panel {
+                font-size: 0.85em;
+            }
+
+            .permission-content {
+                padding: 20px 12px;
+                margin: 10px;
+                width: calc(100% - 20px);
+            }
+
+            .permission-content h2 {
+                font-size: 1.3em;
+            }
+
+            .permission-content p {
+                font-size: 0.9em;
+            }
+
+            .permission-icon {
+                font-size: 3.5em;
+            }
+        }
+
+        /* تحسينات للشاشات الأفقية على الجوال */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .video-container {
+                aspect-ratio: 16/9;
+            }
+
+            .video-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .main-content {
+                grid-template-columns: 2fr 1fr;
+                gap: 10px;
+            }
+
+            .chat-section {
+                height: 200px;
+            }
+
+            .permission-content {
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+        }
+
+        /* تحسينات اللمس */
+        @media (hover: none) and (pointer: coarse) {
+            .control-btn {
+                min-height: 44px; /* الحد الأدنى لسهولة اللمس */
+                padding: 12px 16px;
+            }
+
+            .chat-input button {
+                min-height: 44px;
+                min-width: 60px;
+            }
+
+            .permission-btn {
+                min-height: 48px;
+            }
+
+            /* تحسين حجم النص للقراءة */
+            .message {
+                font-size: 16px;
+                line-height: 1.4;
+            }
+
+            .chat-input input {
+                font-size: 16px;
+                min-height: 44px;
+            }
+        }
+
+        /* منع التحديد والسحب للجوال */
+        .video-container,
+        .video-box,
+        video {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        /* تحسين الانتقالات للجوال */
+        @media (max-width: 768px) {
+            .control-btn,
+            .permission-btn,
+            .chat-input button {
+                transition: background-color 0.2s ease;
+            }
+
+            .control-btn:active,
+            .permission-btn:active,
+            .chat-input button:active {
+                transform: scale(0.98);
             }
         }
     </style>
@@ -476,19 +766,19 @@
 
                 <div class="video-controls">
                     <button id="startBtn" class="control-btn success">
-                        🚀 بدء المحادثة
-                    </button>
-                    <button id="nextBtn" class="control-btn" disabled>
-                        ⏭️ شريك جديد
+                        🚀 <span class="desktop-text">بدء المحادثة</span><span class="mobile-text">بدء</span>
                     </button>
                     <button id="stopBtn" class="control-btn danger" disabled>
-                        🛑 إيقاف
+                        🛑 <span class="desktop-text">إيقاف</span><span class="mobile-text">إيقاف</span>
+                    </button>
+                    <button id="nextBtn" class="control-btn" disabled>
+                        ⏭️ <span class="desktop-text">شريك جديد</span><span class="mobile-text">التالي</span>
                     </button>
                     <button id="micBtn" class="control-btn" disabled>
-                        🎤 الميكروفون
+                        🎤 <span class="desktop-text">الميكروفون</span><span class="mobile-text">صوت</span>
                     </button>
                     <button id="cameraBtn" class="control-btn" disabled>
-                        📹 الكاميرا
+                        📹 <span class="desktop-text">الكاميرا</span><span class="mobile-text">فيديو</span>
                     </button>
                 </div>
 
@@ -681,6 +971,7 @@
             setupEventListeners() {
                 // أزرار طلب الإذن
                 this.allowPermissionEl.addEventListener('click', async () => {
+                    // منع النقر المتعدد
                     this.allowPermissionEl.disabled = true;
                     this.allowPermissionEl.textContent = '⏳ جاري طلب الإذن...';
                     
@@ -688,7 +979,7 @@
                     
                     if (!granted) {
                         this.allowPermissionEl.disabled = false;
-                        this.allowPermissionEl.textContent = '✅ السماح والبدء';
+                        this.allowPermissionEl.innerHTML = '✅ السماح والبدء';
                     }
                 });
                 
@@ -696,18 +987,52 @@
                     alert('❌ لا يمكن استخدام خمبقه بدون إذن الكاميرا والميكروفون');
                 });
 
-                // أزرار التحكم
-                this.startBtnEl.addEventListener('click', () => this.startChat());
-                this.nextBtnEl.addEventListener('click', () => this.findNewPartner());
-                this.stopBtnEl.addEventListener('click', () => this.stopChat());
-                this.micBtnEl.addEventListener('click', () => this.toggleMic());
-                this.cameraBtnEl.addEventListener('click', () => this.toggleCamera());
-
-                // الدردشة النصية
-                this.sendBtnEl.addEventListener('click', () => this.sendMessage());
-                this.messageInputEl.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') this.sendMessage();
+                // أزرار التحكم مع تحسين اللمس
+                this.startBtnEl.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.startChat();
                 });
+                
+                this.nextBtnEl.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.findNewPartner();
+                });
+                
+                this.stopBtnEl.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.stopChat();
+                });
+                
+                this.micBtnEl.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.toggleMic();
+                });
+                
+                this.cameraBtnEl.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.toggleCamera();
+                });
+
+                // الدردشة النصية مع تحسين للجوال
+                this.sendBtnEl.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.sendMessage();
+                });
+                
+                this.messageInputEl.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        this.sendMessage();
+                    }
+                });
+
+                // منع السحب للصور والفيديوهات على الجوال
+                this.localVideoEl.addEventListener('dragstart', (e) => e.preventDefault());
+                this.remoteVideoEl.addEventListener('dragstart', (e) => e.preventDefault());
+                
+                // منع القائمة السياقية على الفيديوهات
+                this.localVideoEl.addEventListener('contextmenu', (e) => e.preventDefault());
+                this.remoteVideoEl.addEventListener('contextmenu', (e) => e.preventDefault());
             }
 
             connectToServer() {
@@ -817,11 +1142,26 @@
                 try {
                     this.showStatus('جاري تشغيل الكاميرا والميكروفون...');
                     
-                    // طلب إذن الكاميرا والميكروفون مرة أخرى للتأكد
-                    this.localStream = await navigator.mediaDevices.getUserMedia({
-                        video: true,
-                        audio: true
-                    });
+                    // إعدادات مختلفة للجوال والكمبيوتر
+                    const isMobile = window.mobileDevice || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                    
+                    const constraints = {
+                        video: {
+                            width: isMobile ? { ideal: 640, max: 1280 } : { ideal: 1280, max: 1920 },
+                            height: isMobile ? { ideal: 480, max: 720 } : { ideal: 720, max: 1080 },
+                            frameRate: isMobile ? { ideal: 15, max: 24 } : { ideal: 24, max: 30 },
+                            facingMode: isMobile ? 'user' : undefined
+                        },
+                        audio: {
+                            echoCancellation: true,
+                            noiseSuppression: true,
+                            autoGainControl: true,
+                            sampleRate: isMobile ? 16000 : 44100
+                        }
+                    };
+                    
+                    // طلب إذن الكاميرا والميكروفون مع الإعدادات المحسنة
+                    this.localStream = await navigator.mediaDevices.getUserMedia(constraints);
 
                     this.localVideoEl.srcObject = this.localStream;
                     this.localVideoEl.style.display = 'block';
@@ -839,7 +1179,20 @@
 
                 } catch (error) {
                     console.error('❌ خطأ في الوصول للكاميرا:', error);
-                    this.showError('لا يمكن الوصول للكاميرا أو الميكروفون');
+                    
+                    let errorMessage = 'لا يمكن الوصول للكاميرا أو الميكروفون';
+                    
+                    if (error.name === 'NotAllowedError') {
+                        errorMessage = 'تم رفض الإذن - يرجى السماح في إعدادات المتصفح';
+                    } else if (error.name === 'NotFoundError') {
+                        errorMessage = 'لم يتم العثور على كاميرا أو ميكروفون';
+                    } else if (error.name === 'NotReadableError') {
+                        errorMessage = 'الكاميرا مستخدمة من تطبيق آخر';
+                    } else if (error.name === 'OverconstrainedError') {
+                        errorMessage = 'إعدادات الكاميرا غير مدعومة';
+                    }
+                    
+                    this.showError(errorMessage);
                 }
             }
 
@@ -879,7 +1232,15 @@
                     });
                 }
                 
-                this.micBtnEl.textContent = this.micEnabled ? '🎤 الميكروفون' : '🔇 كتم الصوت';
+                // تحديث النص حسب حجم الشاشة
+                const isMobile = window.innerWidth <= 768;
+                const micText = isMobile ? 'صوت' : 'الميكروفون';
+                const mutedText = isMobile ? 'كتم' : 'كتم الصوت';
+                
+                this.micBtnEl.innerHTML = this.micEnabled ? 
+                    `🎤 <span class="desktop-text">${micText}</span><span class="mobile-text">صوت</span>` : 
+                    `🔇 <span class="desktop-text">${mutedText}</span><span class="mobile-text">كتم</span>`;
+                    
                 this.micBtnEl.style.background = this.micEnabled ? '#667eea' : '#e74c3c';
                 
                 if (this.socket && this.currentRoom) {
@@ -896,7 +1257,15 @@
                     });
                 }
                 
-                this.cameraBtnEl.textContent = this.cameraEnabled ? '📹 الكاميرا' : '📷 إيقاف الكاميرا';
+                // تحديث النص حسب حجم الشاشة
+                const isMobile = window.innerWidth <= 768;
+                const cameraText = isMobile ? 'فيديو' : 'الكاميرا';
+                const offText = isMobile ? 'مغلق' : 'إيقاف الكاميرا';
+                
+                this.cameraBtnEl.innerHTML = this.cameraEnabled ? 
+                    `📹 <span class="desktop-text">${cameraText}</span><span class="mobile-text">فيديو</span>` : 
+                    `📷 <span class="desktop-text">${offText}</span><span class="mobile-text">مغلق</span>`;
+                    
                 this.cameraBtnEl.style.background = this.cameraEnabled ? '#667eea' : '#e74c3c';
                 
                 if (this.socket && this.currentRoom) {
@@ -1089,8 +1458,33 @@
             }
         }
 
-        // تشغيل التطبيق
+        // تشغيل التطبيق مع تحسينات الجوال
         document.addEventListener('DOMContentLoaded', () => {
+            // منع الزوم المزدوج على iOS
+            let lastTouchEnd = 0;
+            document.addEventListener('touchend', function (event) {
+                const now = (new Date()).getTime();
+                if (now - lastTouchEnd <= 300) {
+                    event.preventDefault();
+                }
+                lastTouchEnd = now;
+            }, false);
+
+            // منع السحب والإفلات على الجوال
+            document.addEventListener('touchmove', function(e) {
+                if (e.target.tagName === 'VIDEO' || e.target.closest('.video-container')) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+
+            // تحسين الأداء للجوال
+            if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                // تقليل جودة الفيديو للجوال لتحسين الأداء
+                window.mobileDevice = true;
+                document.body.classList.add('mobile-device');
+            }
+
+            // إنشاء التطبيق
             new ChatLivePro();
         });
     </script>
