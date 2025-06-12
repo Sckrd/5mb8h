@@ -1,3 +1,67 @@
+// وظائف الأمان
+            showReportModal() {
+                if (!this.currentRoom) {
+                    this.showError('يجب أن تكون في محادثة لتقديم تقرير');
+                    return;
+                }
+                
+                this.reportModalEl.style.display = 'flex';
+                this.warningBannerEl.style.display = 'block';
+                
+                // مسح التحديد السابق
+                document.querySelectorAll('.report-reason').forEach(r => {
+                    r.classList.remove('selected');
+                    r.querySelector('input').checked = false;
+                });
+                this.reportDetailsEl.value = '';
+                
+                // تركيز على أول خيار
+                setTimeout(() => {
+                    document.querySelector('.report-reason input').focus();
+                }, 100);
+            }
+
+            hideReportModal() {
+                this.reportModalEl.style.display = 'none';
+            }
+
+            showBlockModal() {
+                if (!this.currentRoom) {
+                    this.showError('يجب أن تكون في محادثة لحظر مستخدم');
+                    return;
+                }
+                
+                this.blockModalEl.style.display = 'flex';
+            }
+
+            hideBlockModal() {
+                this.blockModalEl.style.display = 'none';
+            }
+
+            sendReport() {
+                const selectedReason = document.querySelector('input[name="reportReason"]:checked');
+                
+                if (!selectedReason) {
+                    // تأثير بصري للتنبيه
+                    document.querySelectorAll('.report-reason').forEach(r => {
+                        r.style.animation = 'shake 0.5s ease-in-out';
+                        setTimeout(() => r.style.animation = '', 500);
+                    });
+                    
+                    this.showError('يرجى اختيار سبب التقرير أولاً');
+                    return;
+                }
+                
+                // تأثير التحميل
+                this.sendReportBtnEl.innerHTML = '⏳ جاري الإرسال...';
+                this.sendReportBtnEl.disabled = true;
+                
+                const reportData = {
+                    reason: selectedReason.value,
+                    details: this.reportDetailsEl.value.trim(),
+                    timestamp: new Date().toISOString(),
+                    sessionId: this.currentRoom,
+                    reporterCountry: this.countrySelectEl.value<!DOCTYPE html>
 <html dir="rtl" lang="ar">
 <head>
     <meta charset="UTF-8">
