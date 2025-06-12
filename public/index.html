@@ -395,10 +395,163 @@
             transform: translateY(-2px);
         }
 
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
+        .instagram-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .instagram-content {
+            background: linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            color: white;
+            position: relative;
+        }
+
+        .instagram-content::before {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            right: 2px;
+            bottom: 2px;
+            background: white;
+            border-radius: 18px;
+            z-index: -1;
+        }
+
+        .instagram-inner {
+            background: linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%);
+            padding: 25px;
+            border-radius: 16px;
+            position: relative;
+        }
+
+        .instagram-icon {
+            font-size: 4em;
+            margin-bottom: 15px;
+            animation: bounce 2s infinite;
+        }
+
+        .instagram-content h3 {
+            margin-bottom: 15px;
+            font-size: 1.4em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .instagram-content p {
+            margin-bottom: 20px;
+            font-size: 1em;
+            line-height: 1.5;
+            opacity: 0.95;
+        }
+
+        .instagram-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .instagram-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: bold;
+            min-width: 120px;
+        }
+
+        .instagram-btn.follow {
+            background: white;
+            color: #dc2743;
+            border: 2px solid white;
+        }
+
+        .instagram-btn.follow:hover {
+            background: #f8f8f8;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .instagram-btn.close {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+
+        .instagram-btn.close:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .instagram-username {
+            font-family: 'Instagram Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-weight: bold;
+            font-size: 1.1em;
+            margin: 10px 0;
+            background: rgba(255,255,255,0.9);
+            color: #dc2743;
+            padding: 8px 15px;
+            border-radius: 15px;
+            display: inline-block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        @media (max-width: 480px) {
+            .instagram-content {
+                padding: 20px 15px;
+                margin: 20px;
+            }
+
+            .instagram-inner {
+                padding: 20px;
+            }
+
+            .instagram-icon {
+                font-size: 3em;
+            }
+
+            .instagram-content h3 {
+                font-size: 1.2em;
+            }
+
+            .instagram-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .instagram-btn {
+                width: 100%;
+                max-width: 200px;
+            }
         }
 
         .mobile-text {
@@ -738,6 +891,78 @@
             </div>
         </div>
 
+        <!-- نافذة الانستقرام -->
+        <div id="instagramModal" class="instagram-popup" style="display: none;">
+            <div class="instagram-content">
+                <div class="instagram-inner">
+                    <div class="instagram-icon">📸</div>
+                    <h3>🌟 تابعنا على انستقرام!</h3>
+                    <p>للحصول على آخر التحديثات والمميزات الجديدة في خمبقه</p>
+                    <div class="instagram-username">@528728_</div>
+                    <div class="instagram-buttons">
+                        <a href="https://instagram.com/528728_" target="_blank" rel="noopener noreferrer" class="instagram-btn follow" id="followBtn">
+                            🔗 متابعة
+                        </a>
+                        <button id="closeInstagramBtn" class="instagram-btn close">
+                            ❌ إغلاق
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- نافذة التقارير -->
+        <div id="reportModal" class="report-modal" style="display: none;">
+            <div class="report-content">
+                <h3>🚨 الإبلاغ عن مخالفة</h3>
+                
+                <div class="warning-banner" id="warningBanner">
+                    ⚠️ تحذير: يمكنك الإبلاغ عن أي سلوك غير لائق
+                </div>
+                
+                <p>اختر سبب الإبلاغ:</p>
+                
+                <div class="report-reasons">
+                    <label class="report-reason" data-reason="inappropriate_content">
+                        <input type="radio" name="reportReason" value="inappropriate_content" style="margin-left: 8px;">
+                        🔞 محتوى غير لائق
+                    </label>
+                    
+                    <label class="report-reason" data-reason="harassment">
+                        <input type="radio" name="reportReason" value="harassment" style="margin-left: 8px;">
+                        😡 تحرش أو إزعاج
+                    </label>
+                    
+                    <label class="report-reason" data-reason="spam">
+                        <input type="radio" name="reportReason" value="spam" style="margin-left: 8px;">
+                        📧 رسائل مزعجة
+                    </label>
+                    
+                    <label class="report-reason" data-reason="fake_profile">
+                        <input type="radio" name="reportReason" value="fake_profile" style="margin-left: 8px;">
+                        👤 هوية مزيفة
+                    </label>
+                    
+                    <label class="report-reason" data-reason="violence">
+                        <input type="radio" name="reportReason" value="violence" style="margin-left: 8px;">
+                        ⚡ عنف أو تهديد
+                    </label>
+                    
+                    <label class="report-reason" data-reason="other">
+                        <input type="radio" name="reportReason" value="other" style="margin-left: 8px;">
+                        📝 أخرى
+                    </label>
+                </div>
+                
+                <textarea id="reportDetails" class="report-textarea" placeholder="تفاصيل إضافية (اختياري)..."></textarea>
+                
+                <div class="report-buttons">
+                    <button id="sendReportBtn" class="report-btn send">🚨 إرسال التقرير</button>
+                    <button id="cancelReportBtn" class="report-btn cancel">❌ إلغاء</button>
+                </div>
+            </div>
+        </div>
+
         <div class="header">
             <h1>🎥 خمبقه</h1>
             <p>منصة الدردشة المرئية الاحترافية - تواصل مع أشخاص جدد من حول العالم</p>
@@ -779,6 +1004,15 @@
                     </button>
                     <button id="cameraBtn" class="control-btn" disabled>
                         📹 <span class="desktop-text">الكاميرا</span><span class="mobile-text">فيديو</span>
+                    </button>
+                </div>
+
+                <div class="safety-controls">
+                    <button id="reportBtn" class="safety-btn">
+                        🚨 إبلاغ
+                    </button>
+                    <button id="blockBtn" class="safety-btn">
+                        🚫 حظر
                     </button>
                 </div>
 
@@ -843,6 +1077,7 @@
                         <div class="message system">أهلاً بك في خمبقه! 🎉</div>
                         <div class="message system">يرجى السماح للوصول إلى الكاميرا والميكروفون 📹🎤</div>
                         <div class="message system">💡 نصيحة: تأكد من أن كاميرتك تعمل قبل البدء</div>
+                        <div class="message system">📸 تابعنا على <span style="cursor: pointer; color: #dc2743; text-decoration: underline;" onclick="window.app.showInstagramPopup()">انستقرام @528728_</span></div>
                     </div>
                     <div class="chat-input">
                         <input type="text" id="messageInput" placeholder="اكتب رسالتك..." disabled>
@@ -880,11 +1115,25 @@
                 this.allowPermissionEl = document.getElementById('allowPermission');
                 this.denyPermissionEl = document.getElementById('denyPermission');
                 
+                // عناصر انستقرام
+                this.instagramModalEl = document.getElementById('instagramModal');
+                this.followBtnEl = document.getElementById('followBtn');
+                this.closeInstagramBtnEl = document.getElementById('closeInstagramBtn');
+                
                 // عناصر الإحصائيات
                 this.activeUsersEl = document.getElementById('activeUsers');
                 this.waitingUsersEl = document.getElementById('waitingUsers');
                 this.activeRoomsEl = document.getElementById('activeRooms');
                 this.connectionStatusEl = document.getElementById('connectionStatus');
+
+                // عناصر الأمان
+                this.reportModalEl = document.getElementById('reportModal');
+                this.reportBtnEl = document.getElementById('reportBtn');
+                this.blockBtnEl = document.getElementById('blockBtn');
+                this.sendReportBtnEl = document.getElementById('sendReportBtn');
+                this.cancelReportBtnEl = document.getElementById('cancelReportBtn');
+                this.reportDetailsEl = document.getElementById('reportDetails');
+                this.warningBannerEl = document.getElementById('warningBanner');
 
                 // متغيرات الحالة
                 this.socket = null;
@@ -915,7 +1164,37 @@
 
             init() {
                 this.setupEventListeners();
+                this.checkInstagramPopup();
                 this.showPermissionModal();
+                this.startSafetyReminders();
+            }
+
+            checkInstagramPopup() {
+                // التحقق من localStorage إذا تم عرض الانستقرام من قبل
+                const instagramShown = localStorage.getItem('khambaqah_instagram_shown');
+                
+                if (!instagramShown) {
+                    // عرض نافذة الانستقرام بعد 3 ثواني من دخول الموقع
+                    setTimeout(() => {
+                        this.showInstagramPopup();
+                    }, 3000);
+                }
+            }
+
+            showInstagramPopup() {
+                this.instagramModalEl.style.display = 'flex';
+                
+                // تسجيل أن النافذة تم عرضها
+                localStorage.setItem('khambaqah_instagram_shown', 'true');
+                
+                // إخفاء تلقائي بعد 15 ثانية
+                setTimeout(() => {
+                    this.hideInstagramPopup();
+                }, 15000);
+            }
+
+            hideInstagramPopup() {
+                this.instagramModalEl.style.display = 'none';
             }
 
             showPermissionModal() {
@@ -990,6 +1269,53 @@
                 
                 this.denyPermissionEl.addEventListener('click', () => {
                     alert('❌ لا يمكن استخدام خمبقه بدون إذن الكاميرا والميكروفون');
+                });
+
+                // أزرار انستقرام
+                this.followBtnEl.addEventListener('click', () => {
+                    // تتبع النقر على زر المتابعة
+                    console.log('📸 تم النقر على متابعة انستقرام');
+                    this.addMessage('شكراً لمتابعتنا على انستقرام! 🌟', 'system');
+                    setTimeout(() => {
+                        this.hideInstagramPopup();
+                    }, 1000);
+                });
+
+                this.closeInstagramBtnEl.addEventListener('click', () => {
+                    this.hideInstagramPopup();
+                });
+
+                // أزرار الأمان
+                this.reportBtnEl.addEventListener('click', () => {
+                    this.showReportModal();
+                });
+
+                this.blockBtnEl.addEventListener('click', () => {
+                    this.blockUser();
+                });
+
+                this.sendReportBtnEl.addEventListener('click', () => {
+                    this.sendReport();
+                });
+
+                this.cancelReportBtnEl.addEventListener('click', () => {
+                    this.hideReportModal();
+                });
+
+                // اختيار سبب التقرير
+                document.querySelectorAll('.report-reason').forEach(reason => {
+                    reason.addEventListener('click', () => {
+                        document.querySelectorAll('.report-reason').forEach(r => r.classList.remove('selected'));
+                        reason.classList.add('selected');
+                        reason.querySelector('input').checked = true;
+                    });
+                });
+
+                // إغلاق نافذة التقرير عند النقر خارجها
+                this.reportModalEl.addEventListener('click', (e) => {
+                    if (e.target === this.reportModalEl) {
+                        this.hideReportModal();
+                    }
                 });
 
                 // أزرار التحكم مع تحسين اللمس
@@ -1337,11 +1663,15 @@
             enableChatControls() {
                 this.messageInputEl.disabled = false;
                 this.sendBtnEl.disabled = false;
+                this.reportBtnEl.disabled = false;
+                this.blockBtnEl.disabled = false;
             }
 
             disableChatControls() {
                 this.messageInputEl.disabled = true;
                 this.sendBtnEl.disabled = true;
+                this.reportBtnEl.disabled = true;
+                this.blockBtnEl.disabled = true;
             }
 
             updateStats(stats) {
@@ -1500,6 +1830,17 @@
                 }
             }
 
+            // وظائف مساعدة للمطورين
+            resetInstagramPopup() {
+                localStorage.removeItem('khambaqah_instagram_shown');
+                console.log('✅ تم إعادة تعيين نافذة الانستقرام - ستظهر في الزيارة القادمة');
+            }
+
+            forceShowInstagram() {
+                this.showInstagramPopup();
+                console.log('📸 تم إظهار نافذة الانستقرام بالقوة');
+            }
+
             retryConnection() {
                 console.log('🔄 إعادة محاولة الاتصال...');
                 
@@ -1508,6 +1849,97 @@
                         this.createAndSendOffer();
                     }
                 }, 2000);
+            }
+
+            // وظائف الأمان
+            showReportModal() {
+                if (!this.currentRoom) {
+                    this.showError('يجب أن تكون في محادثة لتقديم تقرير');
+                    return;
+                }
+                
+                this.reportModalEl.style.display = 'flex';
+                this.warningBannerEl.style.display = 'block';
+                
+                // مسح التحديد السابق
+                document.querySelectorAll('.report-reason').forEach(r => {
+                    r.classList.remove('selected');
+                    r.querySelector('input').checked = false;
+                });
+                this.reportDetailsEl.value = '';
+            }
+
+            hideReportModal() {
+                this.reportModalEl.style.display = 'none';
+            }
+
+            sendReport() {
+                const selectedReason = document.querySelector('input[name="reportReason"]:checked');
+                
+                if (!selectedReason) {
+                    alert('يرجى اختيار سبب التقرير');
+                    return;
+                }
+                
+                const reportData = {
+                    reason: selectedReason.value,
+                    details: this.reportDetailsEl.value.trim(),
+                    timestamp: new Date().toISOString(),
+                    sessionId: this.currentRoom,
+                    reporterCountry: this.countrySelectEl.value
+                };
+                
+                if (this.socket && this.currentRoom) {
+                    this.socket.emit('submit-report', reportData);
+                    this.addMessage('تم إرسال التقرير بنجاح ✅ سيتم مراجعته خلال 24 ساعة', 'system');
+                    this.hideReportModal();
+                    
+                    console.log('🚨 تم إرسال تقرير:', reportData.reason);
+                    
+                    setTimeout(() => {
+                        this.addMessage('شكراً لمساعدتك في جعل خمبقه مكاناً آمناً للجميع 🛡️', 'system');
+                    }, 2000);
+                } else {
+                    alert('لا يمكن إرسال التقرير حالياً');
+                }
+            }
+
+            blockUser() {
+                if (!this.currentRoom) {
+                    this.showError('يجب أن تكون في محادثة لحظر مستخدم');
+                    return;
+                }
+
+                if (confirm('هل أنت متأكد من حظر هذا المستخدم؟\nسيتم قطع الاتصال والانتقال لشريك جديد')) {
+                    this.socket.emit('block-user', { roomId: this.currentRoom });
+                    this.addMessage('تم حظر المستخدم ✅ جاري البحث عن شريك جديد...', 'system');
+                    
+                    setTimeout(() => {
+                        this.findNewPartner();
+                    }, 2000);
+                }
+            }
+
+            // تذكيرات الأمان
+            startSafetyReminders() {
+                setInterval(() => {
+                    if (this.currentRoom) {
+                        this.showSafetyReminder();
+                    }
+                }, 10 * 60 * 1000); // كل 10 دقائق
+            }
+
+            showSafetyReminder() {
+                const reminders = [
+                    'تذكير: لا تشارك معلوماتك الشخصية 🔒',
+                    'للأمان: يمكنك الإبلاغ عن أي سلوك غير لائق 🚨',
+                    'نصيحة: تصرف بأدب واحترم الآخرين 😊',
+                    'تذكير: خصوصيتك مهمة - لا نسجل أي شيء 🛡️',
+                    'نصيحة: تجنب النقر على روابط مشبوهة 🔗'
+                ];
+                
+                const randomReminder = reminders[Math.floor(Math.random() * reminders.length)];
+                this.addMessage(randomReminder, 'system');
             }
 
             cleanup() {
@@ -1583,8 +2015,8 @@
                 document.body.classList.add('mobile-device');
             }
 
-            // إنشاء التطبيق
-            new ChatLivePro();
+            // إنشاء التطبيق وحفظه كمتغير عام
+            window.app = new ChatLivePro();
         });
     </script>
 </body>
