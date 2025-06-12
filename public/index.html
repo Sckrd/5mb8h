@@ -1,4 +1,67 @@
-<!DOCTYPE html>
+// وظائف الأمان
+            showReportModal() {
+                if (!this.currentRoom) {
+                    this.showError('يجب أن تكون في محادثة لتقديم تقرير');
+                    return;
+                }
+                
+                this.reportModalEl.style.display = 'flex';
+                this.warningBannerEl.style.display = 'block';
+                
+                // مسح التحديد السابق
+                document.querySelectorAll('.report-reason').forEach(r => {
+                    r.classList.remove('selected');
+                    r.querySelector('input').checked = false;
+                });
+                this.reportDetailsEl.value = '';
+                
+                // تركيز على أول خيار
+                setTimeout(() => {
+                    document.querySelector('.report-reason input').focus();
+                }, 100);
+            }
+
+            hideReportModal() {
+                this.reportModalEl.style.display = 'none';
+            }
+
+            showBlockModal() {
+                if (!this.currentRoom) {
+                    this.showError('يجب أن تكون في محادثة لحظر مستخدم');
+                    return;
+                }
+                
+                this.blockModalEl.style.display = 'flex';
+            }
+
+            hideBlockModal() {
+                this.blockModalEl.style.display = 'none';
+            }
+
+            sendReport() {
+                const selectedReason = document.querySelector('input[name="reportReason"]:checked');
+                
+                if (!selectedReason) {
+                    // تأثير بصري للتنبيه
+                    document.querySelectorAll('.report-reason').forEach(r => {
+                        r.style.animation = 'shake 0.5s ease-in-out';
+                        setTimeout(() => r.style.animation = '', 500);
+                    });
+                    
+                    this.showError('يرجى اختيار سبب التقرير أولاً');
+                    return;
+                }
+                
+                // تأثير التحميل
+                this.sendReportBtnEl.innerHTML = '⏳ جاري الإرسال...';
+                this.sendReportBtnEl.disabled = true;
+                
+                const reportData = {
+                    reason: selectedReason.value,
+                    details: this.reportDetailsEl.value.trim(),
+                    timestamp: new Date().toISOString(),
+                    sessionId: this.currentRoom,
+                    reporterCountry: this.countrySelectEl.value<!DOCTYPE html>
 <html dir="rtl" lang="ar">
 <head>
     <meta charset="UTF-8">
@@ -571,6 +634,245 @@
             .desktop-text {
                 display: none;
             }
+
+            .container {
+                padding: 10px;
+            }
+
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .video-grid {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .video-container {
+                aspect-ratio: 4/3;
+            }
+            
+            .header {
+                padding: 15px;
+                margin-bottom: 20px;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+                margin-bottom: 8px;
+            }
+
+            .header p {
+                font-size: 1em;
+                line-height: 1.4;
+            }
+            
+            .video-controls {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                margin-top: 10px;
+            }
+
+            .control-btn {
+                padding: 12px 8px;
+                font-size: 0.85em;
+                border-radius: 20px;
+            }
+
+            .control-btn:nth-child(1),
+            .control-btn:nth-child(2) {
+                grid-column: 1 / -1;
+            }
+
+            .safety-controls {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                margin-top: 10px;
+                padding: 15px;
+            }
+
+            .safety-btn {
+                padding: 10px 15px;
+                font-size: 0.9em;
+                min-width: auto;
+            }
+
+            .video-section {
+                padding: 15px;
+            }
+
+            .sidebar {
+                gap: 15px;
+            }
+
+            .status-panel {
+                padding: 15px;
+            }
+
+            .chat-section {
+                height: 300px;
+                padding: 15px;
+            }
+
+            .chat-messages {
+                font-size: 0.9em;
+                padding: 10px;
+            }
+
+            .message {
+                padding: 6px 10px;
+                font-size: 0.9em;
+                margin-bottom: 8px;
+            }
+
+            .chat-input input {
+                padding: 10px;
+                font-size: 16px;
+            }
+
+            .chat-input button {
+                padding: 10px 15px;
+                font-size: 0.9em;
+            }
+
+            .country-select select {
+                padding: 12px;
+                font-size: 16px;
+            }
+
+            .status-panel h3 {
+                font-size: 1.1em;
+                margin-bottom: 12px;
+            }
+
+            .status-item {
+                font-size: 0.9em;
+                padding: 6px 0;
+            }
+
+            /* تحسين نوافذ الأمان للجوال */
+            .report-content, .block-content {
+                padding: 3px;
+                margin: 15px;
+                max-width: none;
+                width: calc(100% - 30px);
+            }
+
+            .report-inner, .block-inner {
+                padding: 25px 20px;
+            }
+
+            .report-icon, .block-icon {
+                font-size: 3em;
+                margin-bottom: 15px;
+            }
+
+            .report-content h3, .block-content h3 {
+                font-size: 1.4em;
+                margin-bottom: 15px;
+            }
+
+            .report-reasons {
+                margin: 20px 0;
+            }
+
+            .report-reason {
+                padding: 12px 15px;
+                margin: 8px 0;
+                font-size: 0.9em;
+            }
+
+            .report-textarea {
+                min-height: 80px;
+                padding: 12px;
+                font-size: 16px;
+            }
+
+            .report-buttons, .block-buttons {
+                flex-direction: column;
+                gap: 12px;
+                align-items: center;
+            }
+
+            .report-btn {
+                width: 100%;
+                max-width: 250px;
+                padding: 12px 20px;
+                font-size: 1em;
+            }
+
+            .warning-banner {
+                padding: 15px 12px;
+                font-size: 1em;
+                margin: 15px 0;
+            }
+
+            /* تحسين نافذة الانستقرام للجوال */
+            .instagram-content {
+                padding: 25px 15px;
+                margin: 20px;
+            }
+
+            .instagram-inner {
+                padding: 20px;
+            }
+
+            .instagram-icon {
+                font-size: 3em;
+            }
+
+            .instagram-content h2 {
+                font-size: 1.5em;
+            }
+
+            .instagram-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .instagram-btn {
+                width: 100%;
+                max-width: 200px;
+            }
+
+            /* تحسين نافذة الإذن للجوال */
+            .permission-content {
+                padding: 25px 15px;
+                margin: 20px;
+                max-width: none;
+                width: calc(100% - 40px);
+            }
+
+            .permission-content h2 {
+                font-size: 1.5em;
+                margin-bottom: 15px;
+            }
+
+            .permission-content p {
+                font-size: 1em;
+                margin-bottom: 20px;
+                line-height: 1.5;
+            }
+
+            .permission-icon {
+                font-size: 4em;
+                margin-bottom: 15px;
+            }
+
+            .permission-buttons {
+                flex-direction: column;
+                gap: 12px;
+                align-items: stretch;
+            }
+
+            .permission-btn {
+                padding: 15px 20px;
+                font-size: 1em;
+                width: 100%;
+            }
+        }
             .container {
                 padding: 10px;
             }
@@ -914,51 +1216,75 @@
         <!-- نافذة التقارير -->
         <div id="reportModal" class="report-modal" style="display: none;">
             <div class="report-content">
-                <h3>🚨 الإبلاغ عن مخالفة</h3>
-                
-                <div class="warning-banner" id="warningBanner">
-                    ⚠️ تحذير: يمكنك الإبلاغ عن أي سلوك غير لائق
+                <div class="report-inner">
+                    <div class="report-icon">🚨</div>
+                    <h3>الإبلاغ عن مخالفة</h3>
+                    
+                    <div class="warning-banner" id="warningBanner">
+                        ⚠️ يمكنك الإبلاغ عن أي سلوك غير لائق - ستبقى هويتك مجهولة
+                    </div>
+                    
+                    <p style="margin-bottom: 20px; color: #555; font-size: 1.1em;">اختر سبب الإبلاغ:</p>
+                    
+                    <div class="report-reasons">
+                        <label class="report-reason" data-reason="inappropriate_content">
+                            <input type="radio" name="reportReason" value="inappropriate_content" style="margin-left: 8px;">
+                            🔞 محتوى غير لائق أو إباحي
+                        </label>
+                        
+                        <label class="report-reason" data-reason="harassment">
+                            <input type="radio" name="reportReason" value="harassment" style="margin-left: 8px;">
+                            😡 تحرش أو إزعاج أو تنمر
+                        </label>
+                        
+                        <label class="report-reason" data-reason="spam">
+                            <input type="radio" name="reportReason" value="spam" style="margin-left: 8px;">
+                            📧 رسائل مزعجة أو إعلانات
+                        </label>
+                        
+                        <label class="report-reason" data-reason="fake_profile">
+                            <input type="radio" name="reportReason" value="fake_profile" style="margin-left: 8px;">
+                            👤 هوية مزيفة أو انتحال شخصية
+                        </label>
+                        
+                        <label class="report-reason" data-reason="violence">
+                            <input type="radio" name="reportReason" value="violence" style="margin-left: 8px;">
+                            ⚡ عنف أو تهديد أو إيذاء
+                        </label>
+                        
+                        <label class="report-reason" data-reason="other">
+                            <input type="radio" name="reportReason" value="other" style="margin-left: 8px;">
+                            📝 سبب آخر
+                        </label>
+                    </div>
+                    
+                    <textarea id="reportDetails" class="report-textarea" placeholder="تفاصيل إضافية (اختياري)... مثل وصف ما حدث أو أي معلومات تساعد في المراجعة"></textarea>
+                    
+                    <div class="report-buttons">
+                        <button id="sendReportBtn" class="report-btn send">🚨 إرسال التقرير</button>
+                        <button id="cancelReportBtn" class="report-btn cancel">❌ إلغاء</button>
+                    </div>
                 </div>
-                
-                <p>اختر سبب الإبلاغ:</p>
-                
-                <div class="report-reasons">
-                    <label class="report-reason" data-reason="inappropriate_content">
-                        <input type="radio" name="reportReason" value="inappropriate_content" style="margin-left: 8px;">
-                        🔞 محتوى غير لائق
-                    </label>
-                    
-                    <label class="report-reason" data-reason="harassment">
-                        <input type="radio" name="reportReason" value="harassment" style="margin-left: 8px;">
-                        😡 تحرش أو إزعاج
-                    </label>
-                    
-                    <label class="report-reason" data-reason="spam">
-                        <input type="radio" name="reportReason" value="spam" style="margin-left: 8px;">
-                        📧 رسائل مزعجة
-                    </label>
-                    
-                    <label class="report-reason" data-reason="fake_profile">
-                        <input type="radio" name="reportReason" value="fake_profile" style="margin-left: 8px;">
-                        👤 هوية مزيفة
-                    </label>
-                    
-                    <label class="report-reason" data-reason="violence">
-                        <input type="radio" name="reportReason" value="violence" style="margin-left: 8px;">
-                        ⚡ عنف أو تهديد
-                    </label>
-                    
-                    <label class="report-reason" data-reason="other">
-                        <input type="radio" name="reportReason" value="other" style="margin-left: 8px;">
-                        📝 أخرى
-                    </label>
-                </div>
-                
-                <textarea id="reportDetails" class="report-textarea" placeholder="تفاصيل إضافية (اختياري)..."></textarea>
-                
-                <div class="report-buttons">
-                    <button id="sendReportBtn" class="report-btn send">🚨 إرسال التقرير</button>
-                    <button id="cancelReportBtn" class="report-btn cancel">❌ إلغاء</button>
+            </div>
+        </div>
+
+        <!-- نافذة تأكيد الحظر -->
+        <div id="blockModal" class="block-confirmation" style="display: none;">
+            <div class="block-content">
+                <div class="block-inner">
+                    <div class="block-icon">🚫</div>
+                    <h3>تأكيد الحظر</h3>
+                    <p style="color: #555; margin: 20px 0; line-height: 1.6;">
+                        هل أنت متأكد من حظر هذا المستخدم؟<br>
+                        <strong>سيتم:</strong><br>
+                        • قطع الاتصال الحالي<br>
+                        • منع التواصل معه مجدداً<br>
+                        • البحث عن شريك جديد
+                    </p>
+                    <div class="block-buttons">
+                        <button id="confirmBlockBtn" class="report-btn send">🚫 نعم، احظره</button>
+                        <button id="cancelBlockBtn" class="report-btn cancel">❌ إلغاء</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1128,10 +1454,13 @@
 
                 // عناصر الأمان
                 this.reportModalEl = document.getElementById('reportModal');
+                this.blockModalEl = document.getElementById('blockModal');
                 this.reportBtnEl = document.getElementById('reportBtn');
                 this.blockBtnEl = document.getElementById('blockBtn');
                 this.sendReportBtnEl = document.getElementById('sendReportBtn');
                 this.cancelReportBtnEl = document.getElementById('cancelReportBtn');
+                this.confirmBlockBtnEl = document.getElementById('confirmBlockBtn');
+                this.cancelBlockBtnEl = document.getElementById('cancelBlockBtn');
                 this.reportDetailsEl = document.getElementById('reportDetails');
                 this.warningBannerEl = document.getElementById('warningBanner');
 
@@ -1291,7 +1620,7 @@
                 });
 
                 this.blockBtnEl.addEventListener('click', () => {
-                    this.blockUser();
+                    this.showBlockModal();
                 });
 
                 this.sendReportBtnEl.addEventListener('click', () => {
@@ -1300,6 +1629,14 @@
 
                 this.cancelReportBtnEl.addEventListener('click', () => {
                     this.hideReportModal();
+                });
+
+                this.confirmBlockBtnEl.addEventListener('click', () => {
+                    this.confirmBlockUser();
+                });
+
+                this.cancelBlockBtnEl.addEventListener('click', () => {
+                    this.hideBlockModal();
                 });
 
                 // اختيار سبب التقرير
@@ -1315,6 +1652,13 @@
                 this.reportModalEl.addEventListener('click', (e) => {
                     if (e.target === this.reportModalEl) {
                         this.hideReportModal();
+                    }
+                });
+
+                // إغلاق نافذة الحظر عند النقر خارجها
+                this.blockModalEl.addEventListener('click', (e) => {
+                    if (e.target === this.blockModalEl) {
+                        this.hideBlockModal();
                     }
                 });
 
@@ -1851,36 +2195,6 @@
                 }, 2000);
             }
 
-            // وظائف الأمان
-            showReportModal() {
-                if (!this.currentRoom) {
-                    this.showError('يجب أن تكون في محادثة لتقديم تقرير');
-                    return;
-                }
-                
-                this.reportModalEl.style.display = 'flex';
-                this.warningBannerEl.style.display = 'block';
-                
-                // مسح التحديد السابق
-                document.querySelectorAll('.report-reason').forEach(r => {
-                    r.classList.remove('selected');
-                    r.querySelector('input').checked = false;
-                });
-                this.reportDetailsEl.value = '';
-            }
-
-            hideReportModal() {
-                this.reportModalEl.style.display = 'none';
-            }
-
-            sendReport() {
-                const selectedReason = document.querySelector('input[name="reportReason"]:checked');
-                
-                if (!selectedReason) {
-                    alert('يرجى اختيار سبب التقرير');
-                    return;
-                }
-                
                 const reportData = {
                     reason: selectedReason.value,
                     details: this.reportDetailsEl.value.trim(),
@@ -1891,55 +2205,145 @@
                 
                 if (this.socket && this.currentRoom) {
                     this.socket.emit('submit-report', reportData);
-                    this.addMessage('تم إرسال التقرير بنجاح ✅ سيتم مراجعته خلال 24 ساعة', 'system');
-                    this.hideReportModal();
                     
-                    console.log('🚨 تم إرسال تقرير:', reportData.reason);
+                    // رسائل تأكيد متدرجة
+                    setTimeout(() => {
+                        this.addMessage('تم إرسال التقرير بنجاح ✅', 'system');
+                        this.hideReportModal();
+                        
+                        // إعادة تعيين الزر
+                        this.sendReportBtnEl.innerHTML = '🚨 إرسال التقرير';
+                        this.sendReportBtnEl.disabled = false;
+                    }, 1000);
+                    
+                    setTimeout(() => {
+                        this.addMessage('سيتم مراجعة التقرير خلال 24 ساعة 📋', 'system');
+                    }, 2500);
                     
                     setTimeout(() => {
                         this.addMessage('شكراً لمساعدتك في جعل خمبقه مكاناً آمناً للجميع 🛡️', 'system');
-                    }, 2000);
+                    }, 4000);
+                    
+                    console.log('🚨 تم إرسال تقرير:', reportData.reason);
+                    
                 } else {
-                    alert('لا يمكن إرسال التقرير حالياً');
+                    this.showError('لا يمكن إرسال التقرير حالياً - يرجى المحاولة لاحقاً');
+                    this.sendReportBtnEl.innerHTML = '🚨 إرسال التقرير';
+                    this.sendReportBtnEl.disabled = false;
                 }
             }
 
-            blockUser() {
-                if (!this.currentRoom) {
-                    this.showError('يجب أن تكون في محادثة لحظر مستخدم');
-                    return;
-                }
-
-                if (confirm('هل أنت متأكد من حظر هذا المستخدم؟\nسيتم قطع الاتصال والانتقال لشريك جديد')) {
+            confirmBlockUser() {
+                // تأثير التحميل
+                this.confirmBlockBtnEl.innerHTML = '⏳ جاري الحظر...';
+                this.confirmBlockBtnEl.disabled = true;
+                
+                if (this.socket && this.currentRoom) {
                     this.socket.emit('block-user', { roomId: this.currentRoom });
-                    this.addMessage('تم حظر المستخدم ✅ جاري البحث عن شريك جديد...', 'system');
                     
                     setTimeout(() => {
+                        this.addMessage('تم حظر المستخدم بنجاح ✅', 'system');
+                        this.hideBlockModal();
+                        
+                        // إعادة تعيين الزر
+                        this.confirmBlockBtnEl.innerHTML = '🚫 نعم، احظره';
+                        this.confirmBlockBtnEl.disabled = false;
+                    }, 1000);
+                    
+                    setTimeout(() => {
+                        this.addMessage('جاري البحث عن شريك جديد... 🔍', 'system');
                         this.findNewPartner();
-                    }, 2000);
+                    }, 2500);
+                    
+                    console.log('🚫 تم حظر المستخدم في الغرفة:', this.currentRoom);
+                    
+                } else {
+                    this.showError('لا يمكن حظر المستخدم حالياً');
+                    this.confirmBlockBtnEl.innerHTML = '🚫 نعم، احظره';
+                    this.confirmBlockBtnEl.disabled = false;
                 }
             }
 
-            // تذكيرات الأمان
+            // تذكيرات الأمان المحسنة
             startSafetyReminders() {
+                // تذكير ترحيبي
+                setTimeout(() => {
+                    this.addMessage('💡 نصيحة: استخدم أزرار الإبلاغ والحظر عند الحاجة', 'system');
+                }, 30000); // بعد 30 ثانية
+
+                // تذكيرات دورية
                 setInterval(() => {
                     if (this.currentRoom) {
                         this.showSafetyReminder();
                     }
-                }, 10 * 60 * 1000); // كل 10 دقائق
+                }, 8 * 60 * 1000); // كل 8 دقائق
             }
 
             showSafetyReminder() {
                 const reminders = [
-                    'تذكير: لا تشارك معلوماتك الشخصية 🔒',
-                    'للأمان: يمكنك الإبلاغ عن أي سلوك غير لائق 🚨',
-                    'نصيحة: تصرف بأدب واحترم الآخرين 😊',
-                    'تذكير: خصوصيتك مهمة - لا نسجل أي شيء 🛡️',
-                    'نصيحة: تجنب النقر على روابط مشبوهة 🔗'
+                    '🔒 تذكير: لا تشارك معلوماتك الشخصية مع الغرباء',
+                    '🚨 للأمان: يمكنك الإبلاغ عن أي سلوك غير لائق في أي وقت',
+                    '😊 نصيحة: تصرف بأدب واحترم الآخرين كما تحب أن تُعامل',
+                    '🛡️ تذكير: خصوصيتك مهمة لنا - لا نسجل أو نحفظ المحادثات',
+                    '🔗 تحذير: تجنب النقر على روابط مشبوهة أو تحميل ملفات',
+                    '⏰ نصيحة: خذ استراحة كل فترة من استخدام الإنترنت',
+                    '🌟 تذكير: ساعدنا في جعل خمبقه مجتمعاً آمناً للجميع'
                 ];
                 
                 const randomReminder = reminders[Math.floor(Math.random() * reminders.length)];
                 this.addMessage(randomReminder, 'system');
+            }
+
+            // تحسين رسائل الأخطاء
+            showError(message) {
+                this.statusDivEl.innerHTML = `<div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <span style="font-size: 1.5em;">⚠️</span>
+                    <span>${message}</span>
+                </div>`;
+                this.statusDivEl.className = 'error';
+                this.statusDivEl.classList.remove('hidden');
+                
+                // اهتزاز بصري
+                this.statusDivEl.style.animation = 'shake 0.5s ease-in-out';
+                setTimeout(() => {
+                    this.statusDivEl.style.animation = '';
+                }, 500);
+                
+                setTimeout(() => {
+                    this.statusDivEl.classList.add('hidden');
+                }, 6000);
+            }
+
+            showSuccess(message) {
+                this.statusDivEl.innerHTML = `<div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <span style="font-size: 1.5em;">✅</span>
+                    <span>${message}</span>
+                </div>`;
+                this.statusDivEl.className = 'success';
+                this.statusDivEl.classList.remove('hidden');
+                
+                // تأثير النجاح
+                this.statusDivEl.style.animation = 'pulse 0.6s ease-in-out';
+                setTimeout(() => {
+                    this.statusDivEl.style.animation = '';
+                }, 600);
+                
+                setTimeout(() => {
+                    this.statusDivEl.classList.add('hidden');
+                }, 4000);
+            }
+
+            showStatus(message) {
+                this.statusDivEl.innerHTML = `<div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <span style="font-size: 1.5em; animation: pulse 1s infinite;">⏳</span>
+                    <span>${message}</span>
+                </div>`;
+                this.statusDivEl.className = 'loading';
+                this.statusDivEl.classList.remove('hidden');
+                
+                setTimeout(() => {
+                    this.statusDivEl.classList.add('hidden');
+                }, 5000);
             }
 
             cleanup() {
