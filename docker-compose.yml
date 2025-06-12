@@ -1,0 +1,204 @@
+version: '3.8'
+
+services:
+  # تطبيق الدردشة الرئيسي
+  app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: chatlive-app
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - MONGODB_URI=mongodb://mongo:27017/videochat
+      - JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+      - CORS_ORIGIN=https://yourdomain.com,http://localhost:3000
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - app-network
+    restart: unless-stopped
+    volumes:
+      - ./logs:/app/logs
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # قاعدة بيانات MongoDB
+  mongo:
+    image: mongo:5.0
+    container_name: chatlive-mongo
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=secure_password_123
+      - MONGO_INITDB_DATABASE=videochat
+    volumes:
+      - mongo_data:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - app-network
+    restart: unless-stopped
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongo localhost:27017/videochat --quiet
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # خادم Nginx للـ Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: chatlive-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    depends_on:
+      - app
+    networks:
+      - app-network
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Redis للـ Session Storage (اختياري)
+  redis:
+    image: redis:6-alpine
+    container_name: chatlive-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - app-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass redis_password_123
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # مراقبة الأداء مع Prometheus (اختياري)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: chatlive-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - app-network
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+
+  # لوحة Grafana للمراقبة (اختياري)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: chatlive-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=grafana_admin_123
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    networks:
+      - app-network
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+
+  # أداة لإدارة قاعدة البيانات (اختياري)
+  mongo-express:
+    image: mongo-express:latest
+    container_name: chatlive-mongo-express
+    ports:
+      - "8081:8081"
+    environment:
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=admin
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=secure_password_123
+      - ME_CONFIG_MONGODB_URL=mongodb://admin:secure_password_123@mongo:27017/
+      - ME_CONFIG_BASICAUTH_USERNAME=admin
+      - ME_CONFIG_BASICAUTH_PASSWORD=express_admin_123
+    depends_on:
+      - mongo
+    networks:
+      - app-network
+    restart: unless-stopped
+    profiles:
+      - dev  # يعمل فقط في وضع التطوير
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mongo_data:
+    driver: local
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+# ===============================
+# أوامر مفيدة:
+# ===============================
+
+# تشغيل جميع الخدمات:
+# docker-compose up -d
+
+# تشغيل مع المراقبة:
+# docker-compose --profile monitoring up -d
+
+# تشغيل في وضع التطوير مع mongo-express:
+# docker-compose --profile dev up -d
+
+# مراقبة اللوجز:
+# docker-compose logs -f app
+
+# إيقاف جميع الخدمات:
+# docker-compose down
+
+# إعادة بناء التطبيق:
+# docker-compose build --no-cache app
+
+# تنظيف الـ volumes:
+# docker-compose down -v
+
+# فحص حالة الخدمات:
+# docker-compose ps
+
+# دخول إلى container التطبيق:
+# docker-compose exec app sh
+
+# عمل backup لقاعدة البيانات:
+# docker-compose exec mongo mongodump --db videochat --out /data/backup
+
+# استعادة backup:
+# docker-compose exec mongo mongorestore /data/backup

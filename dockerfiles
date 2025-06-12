@@ -1,0 +1,65 @@
+# ===============================
+# Dockerfile - ملف Docker الرئيسي
+# ===============================
+
+FROM node:16-alpine
+
+# تثبيت الحزم الأساسية
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    && ln -sf python3 /usr/bin/python
+
+# إنشاء مجلد التطبيق
+WORKDIR /app
+
+# نسخ ملفات package.json أولاً للاستفادة من Docker cache
+COPY package*.json ./
+
+# تثبيت المكتبات
+RUN npm ci --only=production && npm cache clean --force
+
+# نسخ باقي ملفات التطبيق
+COPY . .
+
+# إنشاء مستخدم غير مميز
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
+
+# تغيير ملكية الملفات
+RUN chown -R nodejs:nodejs /app
+USER nodejs
+
+# تحديد المنفذ
+EXPOSE 3001
+
+# متغيرات البيئة الأساسية
+ENV NODE_ENV=production
+ENV PORT=3001
+
+# فحص صحة التطبيق
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD node healthcheck.js
+
+# تشغيل التطبيق
+CMD ["node", "server.js"]
+
+# ===============================
+# .dockerignore - ملف استثناءات Docker
+# ===============================
+
+node_modules
+npm-debug.log
+.git
+.gitignore
+README.md
+.env
+.nyc_output
+coverage
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+logs
+*.log
