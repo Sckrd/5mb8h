@@ -352,22 +352,26 @@ io.on('connection', (socket) => {
     socket.on('webrtc-offer', (data) => {
         const user = activeUsers.get(socket.id);
         if (user && user.roomId) {
+            console.log('📞 تمرير عرض WebRTC من:', socket.id, 'إلى الغرفة:', user.roomId);
             socket.to(user.roomId).emit('webrtc-offer', {
                 offer: data.offer,
                 senderId: socket.id
             });
-            console.log('📞 عرض WebRTC من:', socket.id);
+        } else {
+            console.log('⚠️ محاولة إرسال عرض WebRTC بدون غرفة من:', socket.id);
         }
     });
 
     socket.on('webrtc-answer', (data) => {
         const user = activeUsers.get(socket.id);
         if (user && user.roomId) {
+            console.log('📞 تمرير إجابة WebRTC من:', socket.id, 'إلى الغرفة:', user.roomId);
             socket.to(user.roomId).emit('webrtc-answer', {
                 answer: data.answer,
                 senderId: socket.id
             });
-            console.log('📞 رد WebRTC من:', socket.id);
+        } else {
+            console.log('⚠️ محاولة إرسال إجابة WebRTC بدون غرفة من:', socket.id);
         }
     });
 
