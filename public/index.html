@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>خمبقه</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            color: rgba(255,255,255,0.9);
+            font-size: 1.2em;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .video-section {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .video-container {
+            position: relative;
+            aspect-ratio: 16/9;
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .video-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            height: 100%;
+        }
+
+        .video-box {
+            position: relative;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .video-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(45deg, #2c3e50, #3498db);
+            color: white;
+            font-size: 1.2em;
+            text-align: center;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .video-placeholder i {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .video-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .control-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .control-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .control-btn.danger {
+            background: #e74c3c;
+        }
+
+        .control-btn.danger:hover {
+            background: #c0392b;
+        }
+
+        .control-btn.success {
+            background: #27ae60;
+        }
+
+        .control-btn.success:hover {
+            background: #229954;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .status-panel {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .status-panel h3 {
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .status-value {
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .chat-section {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 20px;
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            border-radius: 18px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+
+        .message.own {
+            background: #667eea;
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .message.other {
+            background: #e9ecef;
+            color: #2c3e50;
+        }
+
+        .message.system {
+            background: #f39c12;
+            color: white;
+            text-align: center;
+            margin: 10px auto;
+            max-width: 100%;
+            font-style: italic;
+        }
+
+        .chat-input {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 25px;
+            font-size: 1em;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .chat-input input:focus {
+            border-color: #667eea;
+        }
+
+        .chat-input button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .chat-input button:hover {
+            background: #5a6fd8;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+            color: #666;
+        }
+
+        .error {
+            background: #e74c3c;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        .success {
+            background: #27ae60;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        .country-select {
+            margin-bottom: 20px;
+        }
+
+        .country-select select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            background: white;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .video-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .control-btn {
+                padding: 10px 16px;
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎥 خمبقه</h1>
+            <p>منصة الدردشة المرئية الاحترافية - تواصل مع أشخاص جدد من حول العالم</p>
+        </div>
+
+        <div class="main-content">
+            <div class="video-section">
+                <div class="video-container">
+                    <div class="video-grid">
+                        <div class="video-box">
+                            <video id="localVideo" autoplay muted style="display: none;"></video>
+                            <div id="localPlaceholder" class="video-placeholder">
+                                <i>📹</i>
+                                <span>الفيديو الخاص بك</span>
+                            </div>
+                        </div>
+                        <div class="video-box">
+                            <video id="remoteVideo" autoplay style="display: none;"></video>
+                            <div id="remotePlaceholder" class="video-placeholder">
+                                <i>👤</i>
+                                <span>في انتظار الشريك...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="video-controls">
+                    <button id="startBtn" class="control-btn success">
+                        🚀 بدء المحادثة
+                    </button>
+                    <button id="nextBtn" class="control-btn" disabled>
+                        ⏭️ شريك جديد
+                    </button>
+                    <button id="stopBtn" class="control-btn danger" disabled>
+                        🛑 إيقاف
+                    </button>
+                    <button id="micBtn" class="control-btn" disabled>
+                        🎤 الميكروفون
+                    </button>
+                    <button id="cameraBtn" class="control-btn" disabled>
+                        📹 الكاميرا
+                    </button>
+                </div>
+
+                <div id="statusDiv" class="loading hidden">
+                    جاري التحضير...
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <div class="status-panel">
+                    <h3>📊 إحصائيات السيرفر</h3>
+                    <div class="status-item">
+                        <span>المستخدمون النشطون:</span>
+                        <span id="activeUsers" class="status-value">0</span>
+                    </div>
+                    <div class="status-item">
+                        <span>في الانتظار:</span>
+                        <span id="waitingUsers" class="status-value">0</span>
+                    </div>
+                    <div class="status-item">
+                        <span>المحادثات النشطة:</span>
+                        <span id="activeRooms" class="status-value">0</span>
+                    </div>
+                    <div class="status-item">
+                        <span>حالة الاتصال:</span>
+                        <span id="connectionStatus" class="status-value">غير متصل</span>
+                    </div>
+                </div>
+
+                <div class="country-select">
+                    <h3>🌍 اختر دولتك</h3>
+                    <select id="countrySelect">
+                        <option value="SA">🇸🇦 السعودية</option>
+                        <option value="AE">🇦🇪 الإمارات</option>
+                        <option value="EG">🇪🇬 مصر</option>
+                        <option value="JO">🇯🇴 الأردن</option>
+                        <option value="LB">🇱🇧 لبنان</option>
+                        <option value="SY">🇸🇾 سوريا</option>
+                        <option value="IQ">🇮🇶 العراق</option>
+                        <option value="KW">🇰🇼 الكويت</option>
+                        <option value="BH">🇧🇭 البحرين</option>
+                        <option value="QA">🇶🇦 قطر</option>
+                        <option value="OM">🇴🇲 عُمان</option>
+                        <option value="YE">🇾🇪 اليمن</option>
+                        <option value="MA">🇲🇦 المغرب</option>
+                        <option value="DZ">🇩🇿 الجزائر</option>
+                        <option value="TN">🇹🇳 تونس</option>
+                        <option value="LY">🇱🇾 ليبيا</option>
+                        <option value="SD">🇸🇩 السودان</option>
+                        <option value="SO">🇸🇴 الصومال</option>
+                        <option value="DJ">🇩🇯 جيبوتي</option>
+                        <option value="KM">🇰🇲 جزر القمر</option>
+                        <option value="MR">🇲🇷 موريتانيا</option>
+                        <option value="PS">🇵🇸 فلسطين</option>
+                        <option value="OTHER">🌍 أخرى</option>
+                    </select>
+                </div>
+
+                <div class="chat-section">
+                    <h3>💬 الدردشة النصية</h3>
+                    <div id="chatMessages" class="chat-messages">
+                        <div class="message system">أهلاً بك في ChatLive Pro! 🎉</div>
+                    </div>
+                    <div class="chat-input">
+                        <input type="text" id="messageInput" placeholder="اكتب رسالتك..." disabled>
+                        <button id="sendBtn" disabled>إرسال</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Socket.io Client -->
+    <script src="/socket.io/socket.io.js"></script>
+    
+    <script>
+        class ChatLivePro {
+            constructor() {
+                // عناصر DOM
+                this.startBtnEl = document.getElementById('startBtn');
+                this.nextBtnEl = document.getElementById('nextBtn');
+                this.stopBtnEl = document.getElementById('stopBtn');
+                this.micBtnEl = document.getElementById('micBtn');
+                this.cameraBtnEl = document.getElementById('cameraBtn');
+                this.statusDivEl = document.getElementById('statusDiv');
+                this.localVideoEl = document.getElementById('localVideo');
+                this.remoteVideoEl = document.getElementById('remoteVideo');
+                this.localPlaceholderEl = document.getElementById('localPlaceholder');
+                this.remotePlaceholderEl = document.getElementById('remotePlaceholder');
+                this.chatMessagesEl = document.getElementById('chatMessages');
+                this.messageInputEl = document.getElementById('messageInput');
+                this.sendBtnEl = document.getElementById('sendBtn');
+                this.countrySelectEl = document.getElementById('countrySelect');
+                
+                // عناصر الإحصائيات
+                this.activeUsersEl = document.getElementById('activeUsers');
+                this.waitingUsersEl = document.getElementById('waitingUsers');
+                this.activeRoomsEl = document.getElementById('activeRooms');
+                this.connectionStatusEl = document.getElementById('connectionStatus');
+
+                // متغيرات الحالة
+                this.socket = null;
+                this.localStream = null;
+                this.peerConnection = null;
+                this.isConnected = false;
+                this.isRegistered = false;
+                this.userId = null;
+                this.currentRoom = null;
+                this.micEnabled = true;
+                this.cameraEnabled = true;
+
+                // إعداد WebRTC
+                this.peerConfig = {
+                    iceServers: [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' }
+                    ]
+                };
+
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.connectToServer();
+            }
+
+            setupEventListeners() {
+                // أزرار التحكم
+                this.startBtnEl.addEventListener('click', () => this.startChat());
+                this.nextBtnEl.addEventListener('click', () => this.findNewPartner());
+                this.stopBtnEl.addEventListener('click', () => this.stopChat());
+                this.micBtnEl.addEventListener('click', () => this.toggleMic());
+                this.cameraBtnEl.addEventListener('click', () => this.toggleCamera());
+
+                // الدردشة النصية
+                this.sendBtnEl.addEventListener('click', () => this.sendMessage());
+                this.messageInputEl.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.sendMessage();
+                });
+            }
+
+            connectToServer() {
+                try {
+                    this.socket = io();
+                    
+                    this.socket.on('connect', () => {
+                        console.log('✅ متصل بالسيرفر');
+                        this.isConnected = true;
+                        this.connectionStatusEl.textContent = 'متصل';
+                        this.connectionStatusEl.style.color = '#27ae60';
+                        this.registerUser();
+                    });
+
+                    this.socket.on('disconnect', () => {
+                        console.log('❌ انقطع الاتصال');
+                        this.isConnected = false;
+                        this.connectionStatusEl.textContent = 'غير متصل';
+                        this.connectionStatusEl.style.color = '#e74c3c';
+                        this.handleDisconnection();
+                    });
+
+                    this.socket.on('registration-success', (data) => {
+                        console.log('✅ تم التسجيل بنجاح');
+                        this.isRegistered = true;
+                        this.userId = data.userId;
+                        this.showSuccess(data.message);
+                    });
+
+                    this.socket.on('registration-error', (data) => {
+                        console.log('❌ خطأ في التسجيل');
+                        this.showError(data.message);
+                    });
+
+                    this.socket.on('waiting-for-partner', (data) => {
+                        console.log('⏳ في انتظار شريك');
+                        this.showStatus(`${data.message} (${data.waitingCount} في الانتظار)`);
+                        this.remotePlaceholderEl.innerHTML = '<i>⏳</i><span>جاري البحث عن شريك...</span>';
+                    });
+
+                    this.socket.on('partner-found', (data) => {
+                        console.log('🎉 تم العثور على شريك');
+                        this.currentRoom = data.roomId;
+                        this.showSuccess(data.message);
+                        this.enableChatControls();
+                        this.remotePlaceholderEl.innerHTML = '<i>👤</i><span>شريك متصل!</span>';
+                        this.initializeWebRTC();
+                    });
+
+                    this.socket.on('partner-left', (data) => {
+                        console.log('👋 غادر الشريك');
+                        this.showError(data.message);
+                        this.handlePartnerDisconnection();
+                    });
+
+                    this.socket.on('receive-message', (data) => {
+                        this.addMessage(data.message, 'other');
+                    });
+
+                    this.socket.on('server-stats', (stats) => {
+                        this.updateStats(stats);
+                    });
+
+                    // WebRTC Events
+                    this.socket.on('webrtc-offer', (data) => {
+                        this.handleWebRTCOffer(data);
+                    });
+
+                    this.socket.on('webrtc-answer', (data) => {
+                        this.handleWebRTCAnswer(data);
+                    });
+
+                    this.socket.on('webrtc-ice-candidate', (data) => {
+                        this.handleWebRTCIceCandidate(data);
+                    });
+
+                    this.socket.on('error', (data) => {
+                        this.showError(data.message);
+                    });
+
+                } catch (error) {
+                    console.error('❌ خطأ في الاتصال:', error);
+                    this.showError('فشل في الاتصال بالسيرفر');
+                }
+            }
+
+            registerUser() {
+                const userData = {
+                    country: this.countrySelectEl.value,
+                    interests: []
+                };
+
+                this.socket.emit('register-user', userData);
+            }
+
+            async startChat() {
+                try {
+                    this.showStatus('جاري تشغيل الكاميرا والميكروفون...');
+                    
+                    // طلب إذن الكاميرا والميكروفون
+                    this.localStream = await navigator.mediaDevices.getUserMedia({
+                        video: true,
+                        audio: true
+                    });
+
+                    this.localVideoEl.srcObject = this.localStream;
+                    this.localVideoEl.style.display = 'block';
+                    this.localPlaceholderEl.style.display = 'none';
+
+                    this.startBtnEl.disabled = true;
+                    this.nextBtnEl.disabled = false;
+                    this.stopBtnEl.disabled = false;
+                    this.micBtnEl.disabled = false;
+                    this.cameraBtnEl.disabled = false;
+
+                    // البحث عن شريك
+                    this.socket.emit('find-partner');
+                    this.showStatus('جاري البحث عن شريك...');
+
+                } catch (error) {
+                    console.error('❌ خطأ في الوصول للكاميرا:', error);
+                    this.showError('لا يمكن الوصول للكاميرا أو الميكروفون');
+                }
+            }
+
+            findNewPartner() {
+                this.showStatus('جاري البحث عن شريك جديد...');
+                this.remotePlaceholderEl.innerHTML = '<i>⏳</i><span>جاري البحث...</span>';
+                this.remotePlaceholderEl.style.display = 'flex';
+                this.remoteVideoEl.style.display = 'none';
+                
+                if (this.peerConnection) {
+                    this.peerConnection.close();
+                    this.peerConnection = null;
+                }
+                
+                this.disableChatControls();
+                this.socket.emit('find-partner');
+            }
+
+            stopChat() {
+                this.cleanup();
+                this.socket.emit('leave-chat');
+                
+                this.startBtnEl.disabled = false;
+                this.nextBtnEl.disabled = true;
+                this.stopBtnEl.disabled = true;
+                this.disableChatControls();
+                
+                this.showStatus('تم إيقاف المحادثة');
+            }
+
+            toggleMic() {
+                this.micEnabled = !this.micEnabled;
+                
+                if (this.localStream) {
+                    this.localStream.getAudioTracks().forEach(track => {
+                        track.enabled = this.micEnabled;
+                    });
+                }
+                
+                this.micBtnEl.textContent = this.micEnabled ? '🎤 الميكروفون' : '🔇 كتم الصوت';
+                this.micBtnEl.style.background = this.micEnabled ? '#667eea' : '#e74c3c';
+                
+                if (this.socket && this.currentRoom) {
+                    this.socket.emit('toggle-audio', { isEnabled: this.micEnabled });
+                }
+            }
+
+            toggleCamera() {
+                this.cameraEnabled = !this.cameraEnabled;
+                
+                if (this.localStream) {
+                    this.localStream.getVideoTracks().forEach(track => {
+                        track.enabled = this.cameraEnabled;
+                    });
+                }
+                
+                this.cameraBtnEl.textContent = this.cameraEnabled ? '📹 الكاميرا' : '📷 إيقاف الكاميرا';
+                this.cameraBtnEl.style.background = this.cameraEnabled ? '#667eea' : '#e74c3c';
+                
+                if (this.socket && this.currentRoom) {
+                    this.socket.emit('toggle-video', { isEnabled: this.cameraEnabled });
+                }
+            }
+
+            sendMessage() {
+                const message = this.messageInputEl.value.trim();
+                if (!message || !this.currentRoom) return;
+
+                this.socket.emit('send-message', { message });
+                this.addMessage(message, 'own');
+                this.messageInputEl.value = '';
+            }
+
+            addMessage(text, type) {
+                const messageEl = document.createElement('div');
+                messageEl.className = `message ${type}`;
+                messageEl.textContent = text;
+                
+                this.chatMessagesEl.appendChild(messageEl);
+                this.chatMessagesEl.scrollTop = this.chatMessagesEl.scrollHeight;
+            }
+
+            showStatus(message) {
+                this.statusDivEl.textContent = message;
+                this.statusDivEl.className = 'loading';
+                this.statusDivEl.classList.remove('hidden');
+                
+                setTimeout(() => {
+                    this.statusDivEl.classList.add('hidden');
+                }, 3000);
+            }
+
+            showError(message) {
+                this.statusDivEl.textContent = message;
+                this.statusDivEl.className = 'error';
+                this.statusDivEl.classList.remove('hidden');
+                
+                setTimeout(() => {
+                    this.statusDivEl.classList.add('hidden');
+                }, 5000);
+            }
+
+            showSuccess(message) {
+                this.statusDivEl.textContent = message;
+                this.statusDivEl.className = 'success';
+                this.statusDivEl.classList.remove('hidden');
+                
+                setTimeout(() => {
+                    this.statusDivEl.classList.add('hidden');
+                }, 3000);
+            }
+
+            enableChatControls() {
+                this.messageInputEl.disabled = false;
+                this.sendBtnEl.disabled = false;
+            }
+
+            disableChatControls() {
+                this.messageInputEl.disabled = true;
+                this.sendBtnEl.disabled = true;
+            }
+
+            updateStats(stats) {
+                this.activeUsersEl.textContent = stats.activeUsers;
+                this.waitingUsersEl.textContent = stats.waitingUsers;
+                this.activeRoomsEl.textContent = stats.activeRooms;
+            }
+
+            // WebRTC Functions
+            async initializeWebRTC() {
+                try {
+                    this.peerConnection = new RTCPeerConnection(this.peerConfig);
+
+                    // إضافة الستريم المحلي
+                    if (this.localStream) {
+                        this.localStream.getTracks().forEach(track => {
+                            this.peerConnection.addTrack(track, this.localStream);
+                        });
+                    }
+
+                    // معالجة الستريم البعيد
+                    this.peerConnection.ontrack = (event) => {
+                        console.log('📺 تم استقبال الفيديو البعيد');
+                        this.remoteVideoEl.srcObject = event.streams[0];
+                        this.remoteVideoEl.style.display = 'block';
+                        this.remotePlaceholderEl.style.display = 'none';
+                    };
+
+                    // معالجة ICE candidates
+                    this.peerConnection.onicecandidate = (event) => {
+                        if (event.candidate) {
+                            this.socket.emit('webrtc-ice-candidate', {
+                                candidate: event.candidate
+                            });
+                        }
+                    };
+
+                    // إنشاء العرض
+                    const offer = await this.peerConnection.createOffer();
+                    await this.peerConnection.setLocalDescription(offer);
+                    
+                    this.socket.emit('webrtc-offer', { offer });
+
+                } catch (error) {
+                    console.error('❌ خطأ في WebRTC:', error);
+                    this.showError('خطأ في إعداد الاتصال المرئي');
+                }
+            }
+
+            async handleWebRTCOffer(data) {
+                try {
+                    if (!this.peerConnection) {
+                        await this.initializeWebRTC();
+                    }
+
+                    await this.peerConnection.setRemoteDescription(data.offer);
+                    const answer = await this.peerConnection.createAnswer();
+                    await this.peerConnection.setLocal
