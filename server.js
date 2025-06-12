@@ -1,729 +1,623 @@
-// server.js - خادم خمبقه مع إحصائيات حقيقية ومستخدمين فعليين
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors');
+const helmet = require('helmet');
 const path = require('path');
+require('dotenv').config();
 
+// إنشاء التطبيق والسيرفر
 const app = express();
 const server = http.createServer(app);
 
-// إعداد Socket.IO
+// إعداد Socket.io مع CORS
 const io = socketIo(server, {
     cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
+        origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : ["http://localhost:3000", "http://127.0.0.1:3000"],
+        methods: ["GET", "POST"],
+        credentials: true
     },
-    transports: ['websocket', 'polling'],
-    pingTimeout: 60000,
-    pingInterval: 25000
+    transports: ['websocket', 'polling']
 });
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.static('public'));
+// Middleware للأمان والإعدادات
+app.use(helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false
+}));
 
-// إدارة المستخدمين والغرف بشكل فعلي
-class RealUserManager {
-    constructor() {
-        this.users = new Map(); // socketId -> user data
-        this.rooms = new Map(); // roomId -> room data
-        this.waitingQueue = []; // array of socketIds waiting for partners
-        this.stats = {
-            totalConnections: 0,
-            peakUsers: 0,
-            totalRoomsCreated: 0,
-            messagesExchanged: 0,
-            averageSessionTime: 0
-        };
-        this.sessionTimes = [];
-        
-        // تنظيف دوري
-        setInterval(() => this.cleanup(), 30000); // كل 30 ثانية
-        
-        // حفظ الإحصائيات كل دقيقة
-        setInterval(() => this.logStats(), 60000);
-    }
+app.use(cors({
+    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : ["http://localhost:3000", "http://127.0.0.1:3000"],
+    credentials: true
+}));
 
-    addUser(socket, userData) {
-        const user = {
-            id: socket.id,
-            socket: socket,
-            country: userData.country || 'UNKNOWN',
-            interests: userData.interests || [],
-            joinedAt: Date.now(),
-            roomId: null,
-            partnerId: null,
-            messagesCount: 0,
-            isActive: true,
-            lastActivity: Date.now(),
-            ipAddress: socket.request.connection.remoteAddress
-        };
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.static(path.join(__dirname, 'public')));
 
-        this.users.set(socket.id, user);
-        this.stats.totalConnections++;
-        
-        // تحديث ذروة المستخدمين
-        if (this.users.size > this.stats.peakUsers) {
-            this.stats.peakUsers = this.users.size;
-        }
+// متغيرات تتبع المستخدمين والغرف
+let activeUsers = new Map();
+let waitingUsers = [];
+let activeRooms = new Map();
 
-        console.log(`👤 مستخدم جديد: ${socket.id} من ${user.country} (المجموع: ${this.users.size})`);
-        return user;
-    }
-
-    removeUser(socketId) {
-        const user = this.users.get(socketId);
-        if (user) {
-            // حساب مدة الجلسة
-            const sessionTime = Date.now() - user.joinedAt;
-            this.sessionTimes.push(sessionTime);
+// Routes الأساسية
+app.get('/', (req, res) => {
+    res.send(`
+    <!DOCTYPE html>
+    <html dir="rtl" lang="ar">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>خمبقه - سيرفر الدردشة المرئية</title>
+        <style>
+            body {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                margin: 0;
+                padding: 20px;
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .container {
+                background: rgba(255,255,255,0.1);
+                padding: 40px;
+                border-radius: 20px;
+                text-align: center;
+                backdrop-filter: blur(10px);
+                box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+                max-width: 600px;
+                width: 100%;
+            }
+            h1 {
+                font-size: 3em;
+                margin-bottom: 20px;
+                text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            }
+            .stats {
+                background: rgba(255,255,255,0.15);
+                padding: 20px;
+                border-radius: 15px;
+                margin: 20px 0;
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 15px;
+            }
+            .stat-item {
+                background: rgba(255,255,255,0.1);
+                padding: 15px;
+                border-radius: 10px;
+                border: 1px solid rgba(255,255,255,0.2);
+            }
+            .stat-number {
+                font-size: 2em;
+                font-weight: bold;
+                color: #ffd700;
+            }
+            .links {
+                margin-top: 30px;
+            }
+            .links a {
+                display: inline-block;
+                background: rgba(255,255,255,0.2);
+                color: white;
+                text-decoration: none;
+                padding: 12px 25px;
+                margin: 5px;
+                border-radius: 25px;
+                border: 2px solid rgba(255,255,255,0.3);
+                transition: all 0.3s ease;
+            }
+            .links a:hover {
+                background: rgba(255,255,255,0.3);
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            }
+            .status {
+                background: #4ade80;
+                padding: 10px 20px;
+                border-radius: 20px;
+                display: inline-block;
+                margin-bottom: 20px;
+                font-weight: bold;
+            }
+            .footer {
+                margin-top: 30px;
+                font-size: 0.9em;
+                opacity: 0.8;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="status">🟢 السيرفر نشط</div>
+            <h1>🚀 خمبقه</h1>
+            <p style="font-size: 1.2em; margin-bottom: 30px;">منصة الدردشة المرئية الاحترافية</p>
             
-            // تحديث متوسط مدة الجلسة
-            if (this.sessionTimes.length > 0) {
-                this.stats.averageSessionTime = this.sessionTimes.reduce((a, b) => a + b, 0) / this.sessionTimes.length;
-            }
-
-            // إزالة من قائمة الانتظار
-            this.removeFromWaitingQueue(socketId);
-
-            // إشعار الشريك إذا كان في غرفة
-            if (user.roomId && user.partnerId) {
-                const partner = this.users.get(user.partnerId);
-                if (partner) {
-                    partner.socket.emit('partner-left', {
-                        message: 'غادر الشريك المحادثة'
-                    });
-                    partner.roomId = null;
-                    partner.partnerId = null;
-                }
-                
-                // حذف الغرفة
-                this.rooms.delete(user.roomId);
-            }
-
-            this.users.delete(socketId);
-            console.log(`❌ مستخدم غادر: ${socketId} (المجموع: ${this.users.size})`);
-        }
-    }
-
-    addToWaitingQueue(socketId) {
-        if (!this.waitingQueue.includes(socketId)) {
-            this.waitingQueue.push(socketId);
-            console.log(`⏳ إضافة للانتظار: ${socketId} (في الانتظار: ${this.waitingQueue.length})`);
-        }
-    }
-
-    removeFromWaitingQueue(socketId) {
-        const index = this.waitingQueue.indexOf(socketId);
-        if (index > -1) {
-            this.waitingQueue.splice(index, 1);
-            console.log(`✅ إزالة من الانتظار: ${socketId}`);
-        }
-    }
-
-    findPartner(currentUserId) {
-        const currentUser = this.users.get(currentUserId);
-        if (!currentUser) return null;
-
-        // البحث عن شريك مناسب
-        const availablePartners = this.waitingQueue.filter(partnerId => {
-            const partner = this.users.get(partnerId);
-            return partner && 
-                   partnerId !== currentUserId && 
-                   !partner.roomId &&
-                   partner.isActive &&
-                   partner.country !== currentUser.country && // تنويع الدول
-                   partner.ipAddress !== currentUser.ipAddress; // منع نفس IP
-        });
-
-        if (availablePartners.length > 0) {
-            // اختيار شريك عشوائي
-            const randomIndex = Math.floor(Math.random() * availablePartners.length);
-            const partnerId = availablePartners[randomIndex];
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-number">${activeUsers.size}</div>
+                    <div>المستخدمون النشطون</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">${waitingUsers.length}</div>
+                    <div>في الانتظار</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">${activeRooms.size}</div>
+                    <div>المحادثات النشطة</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">${Math.floor(process.uptime() / 60)}</div>
+                    <div>دقائق التشغيل</div>
+                </div>
+            </div>
             
-            return this.users.get(partnerId);
-        }
-
-        return null;
-    }
-
-    createRoom(user1, user2) {
-        const roomId = this.generateRoomId();
-        const room = {
-            id: roomId,
-            users: [user1.id, user2.id],
-            createdAt: Date.now(),
-            messages: [],
-            country1: user1.country,
-            country2: user2.country,
-            isActive: true
-        };
-
-        this.rooms.set(roomId, room);
-        this.stats.totalRoomsCreated++;
-
-        // تحديث بيانات المستخدمين
-        user1.roomId = roomId;
-        user1.partnerId = user2.id;
-        user2.roomId = roomId;
-        user2.partnerId = user1.id;
-
-        // إزالة من قائمة الانتظار
-        this.removeFromWaitingQueue(user1.id);
-        this.removeFromWaitingQueue(user2.id);
-
-        // إدخال الغرفة
-        user1.socket.join(roomId);
-        user2.socket.join(roomId);
-
-        console.log(`🏠 غرفة جديدة: ${roomId} (${user1.country} ↔ ${user2.country})`);
-        return room;
-    }
-
-    generateRoomId() {
-        return `room_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
-    }
-
-    addMessage(roomId, senderId, message) {
-        const room = this.rooms.get(roomId);
-        if (room) {
-            const messageData = {
-                id: Date.now() + Math.random(),
-                senderId: senderId,
-                content: message,
-                timestamp: Date.now()
-            };
+            <div class="links">
+                <a href="/health">📊 فحص الصحة</a>
+                <a href="/stats">📈 الإحصائيات المفصلة</a>
+            </div>
             
-            room.messages.push(messageData);
-            this.stats.messagesExchanged++;
+            <div class="footer">
+                <p>تم التطوير بـ ❤️ | Node.js + Socket.io</p>
+                <p>الإصدار: 1.0.0 | البيئة: ${process.env.NODE_ENV || 'development'}</p>
+                <p><strong>خمبقه</strong> - أفضل منصة دردشة مرئية في الوطن العربي</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    `);
+});
 
-            // تحديث نشاط المستخدم
-            const user = this.users.get(senderId);
-            if (user) {
-                user.messagesCount++;
-                user.lastActivity = Date.now();
-            }
-
-            return messageData;
+app.get('/health', (req, res) => {
+    res.json({
+        status: 'OK',
+        message: 'السيرفر يعمل بنجاح ✅',
+        timestamp: new Date().toISOString(),
+        server: {
+            uptime: process.uptime(),
+            memory: process.memoryUsage(),
+            version: process.version,
+            platform: process.platform
+        },
+        stats: {
+            activeUsers: activeUsers.size,
+            waitingUsers: waitingUsers.length,
+            activeRooms: activeRooms.size
+        },
+        environment: {
+            nodeEnv: process.env.NODE_ENV || 'development',
+            port: process.env.PORT || 3001
         }
-        return null;
-    }
+    });
+});
 
-    getActiveStats() {
-        // إحصائيات مباشرة ومحدثة
-        const activeUsers = Array.from(this.users.values()).filter(user => 
-            user.isActive && (Date.now() - user.lastActivity) < 300000 // نشط خلال 5 دقائق
-        );
-
-        const activeRooms = Array.from(this.rooms.values()).filter(room => 
-            room.isActive && this.users.has(room.users[0]) && this.users.has(room.users[1])
-        );
-
-        // إحصائيات التوزيع الجغرافي
-        const countryStats = {};
-        activeUsers.forEach(user => {
-            countryStats[user.country] = (countryStats[user.country] || 0) + 1;
-        });
-
-        return {
-            activeUsers: activeUsers.length,
-            waitingUsers: this.waitingQueue.length,
-            activeRooms: activeRooms.length,
-            totalConnections: this.stats.totalConnections,
-            peakUsers: this.stats.peakUsers,
-            totalRoomsCreated: this.stats.totalRoomsCreated,
-            messagesExchanged: this.stats.messagesExchanged,
-            averageSessionTime: Math.round(this.stats.averageSessionTime / 1000 / 60), // دقائق
-            countryDistribution: countryStats,
-            timestamp: Date.now()
-        };
-    }
-
-    cleanup() {
-        const now = Date.now();
-        const inactiveThreshold = 10 * 60 * 1000; // 10 دقائق
-
-        // تنظيف المستخدمين غير النشطين
-        for (const [socketId, user] of this.users.entries()) {
-            if (now - user.lastActivity > inactiveThreshold) {
-                console.log(`🧹 تنظيف مستخدم غير نشط: ${socketId}`);
-                this.removeUser(socketId);
-            }
+app.get('/stats', (req, res) => {
+    const detailedStats = {
+        overview: {
+            activeUsers: activeUsers.size,
+            waitingUsers: waitingUsers.length,
+            activeRooms: activeRooms.size,
+            uptime: process.uptime()
+        },
+        users: Array.from(activeUsers.values()).map(user => ({
+            id: user.id.substring(0, 8) + '...',
+            country: user.country,
+            interests: user.interests,
+            isWaiting: user.isWaiting,
+            hasRoom: !!user.roomId,
+            joinedAt: user.joinedAt
+        })),
+        rooms: Array.from(activeRooms.entries()).map(([roomId, room]) => ({
+            roomId: roomId.substring(0, 12) + '...',
+            userCount: room.users.length,
+            createdAt: room.createdAt,
+            duration: Date.now() - new Date(room.createdAt).getTime()
+        })),
+        system: {
+            memory: process.memoryUsage(),
+            cpuUsage: process.cpuUsage(),
+            version: process.version,
+            platform: process.platform
         }
-
-        // تنظيف الغرف الفارغة
-        for (const [roomId, room] of this.rooms.entries()) {
-            const hasActiveUsers = room.users.some(userId => this.users.has(userId));
-            if (!hasActiveUsers) {
-                console.log(`🧹 حذف غرفة فارغة: ${roomId}`);
-                this.rooms.delete(roomId);
-            }
-        }
-
-        // تنظيف قائمة الانتظار
-        this.waitingQueue = this.waitingQueue.filter(socketId => 
-            this.users.has(socketId) && this.users.get(socketId).isActive
-        );
-    }
-
-    logStats() {
-        const stats = this.getActiveStats();
-        console.log(`📊 إحصائيات الخادم:
-        - المستخدمون النشطون: ${stats.activeUsers}
-        - في الانتظار: ${stats.waitingUsers}  
-        - الغرف النشطة: ${stats.activeRooms}
-        - إجمالي الاتصالات: ${stats.totalConnections}
-        - ذروة المستخدمين: ${stats.peakUsers}
-        - الرسائل المتبادلة: ${stats.messagesExchanged}
-        - متوسط مدة الجلسة: ${stats.averageSessionTime} دقيقة`);
-    }
-
-    updateUserActivity(socketId) {
-        const user = this.users.get(socketId);
-        if (user) {
-            user.lastActivity = Date.now();
-            user.isActive = true;
-        }
-    }
-}
-
-// إنشاء مدير المستخدمين
-const userManager = new RealUserManager();
-
-// بث الإحصائيات للجميع كل 5 ثوانٍ
-setInterval(() => {
-    const stats = userManager.getActiveStats();
-    io.emit('server-stats', stats);
-}, 5000);
-
-// معالجة اتصالات Socket.IO
-io.on('connection', (socket) => {
-    console.log(`🔗 اتصال جديد: ${socket.id}`);
+    };
     
-    // إرسال الإحصائيات فوراً للمستخدم الجديد
-    const initialStats = userManager.getActiveStats();
-    socket.emit('server-stats', initialStats);
+    res.json(detailedStats);
+});
+
+// معالجة اتصالات Socket.io
+io.on('connection', (socket) => {
+    console.log('🔗 مستخدم جديد متصل:', socket.id);
 
     // تسجيل مستخدم جديد
     socket.on('register-user', (userData) => {
         try {
-            const user = userManager.addUser(socket, userData);
+            const user = {
+                id: socket.id,
+                country: userData.country || 'OTHER',
+                interests: userData.interests || [],
+                isWaiting: false,
+                roomId: null,
+                joinedAt: new Date()
+            };
             
-            socket.emit('registration-success', {
-                message: 'تم التسجيل بنجاح في خمبقه! 🎉',
-                userId: user.id,
-                serverInfo: {
-                    onlineUsers: userManager.users.size,
-                    totalRooms: userManager.rooms.size
-                }
+            activeUsers.set(socket.id, user);
+            updateServerStats();
+            
+            socket.emit('registration-success', { 
+                userId: socket.id,
+                message: 'تم التسجيل بنجاح ✅'
             });
-
-            // إرسال رسالة ترحيب شخصية
-            socket.emit('welcome-message', {
-                message: `أهلاً بك من ${user.country}! يوجد ${userManager.users.size} مستخدم متصل الآن.`,
-                country: user.country
-            });
-
+            
+            console.log('✅ تم تسجيل المستخدم:', socket.id, 'من:', user.country);
+            
         } catch (error) {
-            console.error('خطأ في تسجيل المستخدم:', error);
-            socket.emit('registration-error', {
-                message: 'خطأ في التسجيل، يرجى المحاولة مرة أخرى'
+            console.error('❌ خطأ في تسجيل المستخدم:', error);
+            socket.emit('registration-error', { 
+                message: 'حدث خطأ في التسجيل، حاول مرة أخرى'
             });
         }
     });
 
     // البحث عن شريك
     socket.on('find-partner', () => {
-        const user = userManager.users.get(socket.id);
-        if (!user) {
+        const currentUser = activeUsers.get(socket.id);
+        if (!currentUser) {
             socket.emit('error', { message: 'يجب التسجيل أولاً' });
             return;
         }
 
-        userManager.updateUserActivity(socket.id);
+        console.log('🔍 المستخدم', socket.id, 'يبحث عن شريك');
 
-        // التحقق من وجود الشريك
-        const partner = userManager.findPartner(socket.id);
-
+        // البحث عن مستخدم متوافق
+        const partner = findCompatiblePartner(currentUser);
+        
         if (partner) {
             // إنشاء غرفة جديدة
-            const room = userManager.createRoom(user, partner);
-
-            // إشعار كلا المستخدمين
-            socket.emit('partner-found', {
-                message: `تم العثور على شريك من ${partner.country}! 🎉`,
-                roomId: room.id,
-                partnerId: partner.id,
-                partnerCountry: partner.country
-            });
-
-            partner.socket.emit('partner-found', {
-                message: `تم العثور على شريك من ${user.country}! 🎉`,
-                roomId: room.id,
-                partnerId: user.id,
-                partnerCountry: user.country
-            });
-
-            console.log(`🤝 تم ربط ${user.id} (${user.country}) مع ${partner.id} (${partner.country})`);
-
+            const roomId = generateRoomId();
+            createRoom(roomId, currentUser, partner);
+            
         } else {
-            // إضافة لقائمة الانتظار
-            userManager.addToWaitingQueue(socket.id);
+            // إضافة للقائمة المنتظرة
+            if (!waitingUsers.includes(socket.id)) {
+                waitingUsers.push(socket.id);
+                currentUser.isWaiting = true;
+            }
             
             socket.emit('waiting-for-partner', {
-                message: 'جاري البحث عن شريك مناسب...',
-                waitingCount: userManager.waitingQueue.length,
-                estimatedWait: Math.max(1, Math.floor(userManager.waitingQueue.length / 2)) // تقدير وقت الانتظار
+                message: 'جاري البحث عن شريك مناسب... 🔍',
+                waitingCount: waitingUsers.length,
+                estimatedWait: waitingUsers.length * 5 // تقدير 5 ثوان لكل مستخدم
             });
         }
+        
+        updateServerStats();
+    });
 
-        // إرسال إحصائيات محدثة
-        const stats = userManager.getActiveStats();
-        io.emit('server-stats', stats);
+    // إرسال رسالة نصية
+    socket.on('send-message', (data) => {
+        const user = activeUsers.get(socket.id);
+        if (!user || !user.roomId) {
+            socket.emit('error', { message: 'غير متصل بغرفة دردشة' });
+            return;
+        }
+
+        if (!data.message || data.message.trim().length === 0) {
+            socket.emit('error', { message: 'لا يمكن إرسال رسالة فارغة' });
+            return;
+        }
+
+        const messageData = {
+            message: data.message.trim(),
+            timestamp: new Date().toISOString(),
+            senderId: socket.id
+        };
+
+        socket.to(user.roomId).emit('receive-message', messageData);
+        console.log('💬 رسالة من', socket.id, ':', data.message.substring(0, 50));
+    });
+
+    // إنهاء المحادثة والبحث عن شريك جديد
+    socket.on('next-partner', () => {
+        const user = activeUsers.get(socket.id);
+        if (user && user.roomId) {
+            leaveRoom(socket.id);
+        }
+        
+        // البحث عن شريك جديد
+        socket.emit('find-partner');
     });
 
     // مغادرة المحادثة
     socket.on('leave-chat', () => {
-        const user = userManager.users.get(socket.id);
-        if (user && user.roomId) {
-            const room = userManager.rooms.get(user.roomId);
-            if (room) {
-                // إشعار الشريك
-                const partnerId = user.partnerId;
-                if (partnerId) {
-                    const partner = userManager.users.get(partnerId);
-                    if (partner) {
-                        partner.socket.emit('partner-left', {
-                            message: 'غادر الشريك المحادثة 👋',
-                            sessionDuration: Math.floor((Date.now() - room.createdAt) / 1000 / 60) // بالدقائق
-                        });
-                        partner.roomId = null;
-                        partner.partnerId = null;
-                    }
-                }
-
-                // حذف الغرفة
-                userManager.rooms.delete(user.roomId);
-                user.roomId = null;
-                user.partnerId = null;
-
-                console.log(`🚪 ${socket.id} غادر الغرفة ${room.id}`);
+        const user = activeUsers.get(socket.id);
+        if (user) {
+            if (user.roomId) {
+                leaveRoom(socket.id);
             }
+            
+            // إزالة من قائمة الانتظار
+            waitingUsers = waitingUsers.filter(id => id !== socket.id);
+            user.isWaiting = false;
+            
+            socket.emit('chat-left', { message: 'تم مغادرة المحادثة' });
         }
-
-        // إزالة من قائمة الانتظار
-        userManager.removeFromWaitingQueue(socket.id);
-    });
-
-    // إرسال رسالة
-    socket.on('send-message', (data) => {
-        const user = userManager.users.get(socket.id);
-        if (!user || !user.roomId) {
-            return;
-        }
-
-        userManager.updateUserActivity(socket.id);
-
-        const message = data.message.trim();
-        if (!message || message.length > 500) { // حد أقصى 500 حرف
-            return;
-        }
-
-        // إضافة الرسالة للغرفة
-        const messageData = userManager.addMessage(user.roomId, socket.id, message);
         
-        if (messageData) {
-            // إرسال للشريك فقط
-            socket.to(user.roomId).emit('receive-message', {
-                message: message,
-                senderId: socket.id,
-                timestamp: messageData.timestamp
-            });
-
-            console.log(`💬 رسالة في ${user.roomId}: ${message.substring(0, 50)}...`);
-        }
+        updateServerStats();
     });
 
-    // WebRTC Signaling
+    // معالجة WebRTC للمكالمات المرئية
     socket.on('webrtc-offer', (data) => {
-        const user = userManager.users.get(socket.id);
-        if (user && user.partnerId) {
-            socket.to(user.partnerId).emit('webrtc-offer', {
+        const user = activeUsers.get(socket.id);
+        if (user && user.roomId) {
+            console.log('📞 تمرير عرض WebRTC من:', socket.id, 'إلى الغرفة:', user.roomId);
+            socket.to(user.roomId).emit('webrtc-offer', {
                 offer: data.offer,
                 senderId: socket.id
             });
-            console.log(`📞 عرض WebRTC من ${socket.id} إلى ${user.partnerId}`);
+        } else {
+            console.log('⚠️ محاولة إرسال عرض WebRTC بدون غرفة من:', socket.id);
         }
     });
 
     socket.on('webrtc-answer', (data) => {
-        const user = userManager.users.get(socket.id);
-        if (user && user.partnerId) {
-            socket.to(user.partnerId).emit('webrtc-answer', {
+        const user = activeUsers.get(socket.id);
+        if (user && user.roomId) {
+            console.log('📞 تمرير إجابة WebRTC من:', socket.id, 'إلى الغرفة:', user.roomId);
+            socket.to(user.roomId).emit('webrtc-answer', {
                 answer: data.answer,
                 senderId: socket.id
             });
-            console.log(`📞 إجابة WebRTC من ${socket.id} إلى ${user.partnerId}`);
+        } else {
+            console.log('⚠️ محاولة إرسال إجابة WebRTC بدون غرفة من:', socket.id);
         }
     });
 
     socket.on('webrtc-ice-candidate', (data) => {
-        const user = userManager.users.get(socket.id);
-        if (user && user.partnerId) {
-            socket.to(user.partnerId).emit('webrtc-ice-candidate', {
+        const user = activeUsers.get(socket.id);
+        if (user && user.roomId) {
+            socket.to(user.roomId).emit('webrtc-ice-candidate', {
                 candidate: data.candidate,
                 senderId: socket.id
             });
         }
     });
 
-    // تحديث حالة الصوت/الفيديو
+    // إشارات التحكم في الصوت والفيديو
     socket.on('toggle-audio', (data) => {
-        const user = userManager.users.get(socket.id);
-        if (user && user.partnerId) {
-            socket.to(user.partnerId).emit('partner-audio-toggle', {
-                isEnabled: data.isEnabled
+        const user = activeUsers.get(socket.id);
+        if (user && user.roomId) {
+            socket.to(user.roomId).emit('partner-audio-toggle', {
+                isEnabled: data.isEnabled,
+                senderId: socket.id
             });
         }
     });
 
     socket.on('toggle-video', (data) => {
-        const user = userManager.users.get(socket.id);
-        if (user && user.partnerId) {
-            socket.to(user.partnerId).emit('partner-video-toggle', {
-                isEnabled: data.isEnabled
-            });
-        }
-    });
-
-    // نظام الإبلاغ
-    socket.on('submit-report', (reportData) => {
-        const user = userManager.users.get(socket.id);
+        const user = activeUsers.get(socket.id);
         if (user && user.roomId) {
-            const report = {
-                id: `report_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
-                reporterId: socket.id,
-                reportedUserId: user.partnerId,
-                roomId: user.roomId,
-                reason: reportData.reason,
-                details: reportData.details,
-                timestamp: Date.now(),
-                reporterCountry: user.country,
-                reporterIP: socket.request.connection.remoteAddress
-            };
-
-            // حفظ التقرير (هنا يمكن حفظه في قاعدة البيانات)
-            console.log(`🚨 تقرير جديد: ${report.id} - ${report.reason}`);
-
-            socket.emit('report-submitted', {
-                message: 'تم إرسال التقرير بنجاح. شكراً لك! 🛡️',
-                reportId: report.id
+            socket.to(user.roomId).emit('partner-video-toggle', {
+                isEnabled: data.isEnabled,
+                senderId: socket.id
             });
-
-            // إحصائية التقارير
-            userManager.stats.reportsSubmitted = (userManager.stats.reportsSubmitted || 0) + 1;
         }
-    });
-
-    // نظام الحظر
-    socket.on('block-user', (data) => {
-        const user = userManager.users.get(socket.id);
-        if (user && user.roomId) {
-            const partnerId = user.partnerId;
-
-            // إشعار الشريك وقطع الاتصال
-            if (partnerId) {
-                const partner = userManager.users.get(partnerId);
-                if (partner) {
-                    partner.socket.emit('partner-left', {
-                        message: 'انتهت المحادثة'
-                    });
-                    partner.roomId = null;
-                    partner.partnerId = null;
-                }
-            }
-
-            // حذف الغرفة
-            if (user.roomId) {
-                userManager.rooms.delete(user.roomId);
-            }
-
-            user.roomId = null;
-            user.partnerId = null;
-
-            socket.emit('user-blocked', {
-                message: 'تم حظر المستخدم بنجاح ✅'
-            });
-
-            console.log(`🚫 ${socket.id} حظر ${partnerId}`);
-        }
-    });
-
-    // ping للتأكد من النشاط
-    socket.on('ping', () => {
-        userManager.updateUserActivity(socket.id);
-        socket.emit('pong');
     });
 
     // قطع الاتصال
-    socket.on('disconnect', (reason) => {
-        console.log(`📴 انقطع الاتصال: ${socket.id} - السبب: ${reason}`);
-        userManager.removeUser(socket.id);
-        
-        // إرسال إحصائيات محدثة
-        const stats = userManager.getActiveStats();
-        io.emit('server-stats', stats);
+    socket.on('disconnect', () => {
+        console.log('❌ مستخدم منقطع:', socket.id);
+        handleDisconnection(socket.id);
     });
 
-    // خطأ في الاتصال
+    // معالجة الأخطاء
     socket.on('error', (error) => {
-        console.error(`❌ خطأ في الاتصال ${socket.id}:`, error);
+        console.error('⚠️ خطأ Socket من', socket.id, ':', error);
     });
 });
 
-// REST API للإحصائيات العامة
-app.get('/api/stats', (req, res) => {
-    try {
-        const stats = userManager.getActiveStats();
-        res.json({
-            success: true,
-            data: stats,
-            server: {
-                uptime: process.uptime(),
-                memory: process.memoryUsage(),
-                platform: process.platform,
-                nodeVersion: process.version
-            }
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            error: 'خطأ في جلب الإحصائيات'
-        });
-    }
-});
-
-// API للصحة العامة للخادم
-app.get('/api/health', (req, res) => {
-    res.json({
-        success: true,
-        status: 'running',
-        timestamp: new Date().toISOString(),
-        users: userManager.users.size,
-        rooms: userManager.rooms.size,
-        uptime: process.uptime()
-    });
-});
-
-// API لتفاصيل التوزيع الجغرافي
-app.get('/api/countries', (req, res) => {
-    try {
-        const stats = userManager.getActiveStats();
-        res.json({
-            success: true,
-            distribution: stats.countryDistribution,
-            totalCountries: Object.keys(stats.countryDistribution).length
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            error: 'خطأ في جلب بيانات الدول'
-        });
-    }
-});
-
-// صفحة المراقبة للإدارة
-app.get('/admin', (req, res) => {
-    const stats = userManager.getActiveStats();
-    const html = `
-    <!DOCTYPE html>
-    <html dir="rtl">
-    <head>
-        <title>مراقبة خمبقه</title>
-        <meta charset="UTF-8">
-        <meta http-equiv="refresh" content="10">
-        <style>
-            body { font-family: Arial; padding: 20px; background: #f5f5f5; }
-            .card { background: white; padding: 20px; margin: 10px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-            .stat { display: inline-block; margin: 10px; padding: 15px; background: #667eea; color: white; border-radius: 5px; }
-            .countries { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
-            .country { background: #27ae60; color: white; padding: 10px; border-radius: 5px; text-align: center; }
-        </style>
-    </head>
-    <body>
-        <h1>🎥 لوحة مراقبة خمبقه</h1>
+// وظائف مساعدة
+function findCompatiblePartner(currentUser) {
+    for (let i = 0; i < waitingUsers.length; i++) {
+        const waitingUserId = waitingUsers[i];
+        const waitingUser = activeUsers.get(waitingUserId);
         
-        <div class="card">
-            <h2>📊 الإحصائيات المباشرة</h2>
-            <div class="stat">👥 المستخدمون النشطون: ${stats.activeUsers}</div>
-            <div class="stat">⏳ في الانتظار: ${stats.waitingUsers}</div>
-            <div class="stat">🏠 الغرف النشطة: ${stats.activeRooms}</div>
-            <div class="stat">📈 إجمالي الاتصالات: ${stats.totalConnections}</div>
-            <div class="stat">🔝 ذروة المستخدمين: ${stats.peakUsers}</div>
-            <div class="stat">💬 الرسائل المتبادلة: ${stats.messagesExchanged}</div>
-            <div class="stat">⏱️ متوسط مدة الجلسة: ${stats.averageSessionTime} دقيقة</div>
-        </div>
+        if (waitingUser && waitingUser.id !== currentUser.id && !waitingUser.roomId) {
+            // إزالة من قائمة الانتظار
+            waitingUsers.splice(i, 1);
+            waitingUser.isWaiting = false;
+            return waitingUser;
+        }
+    }
+    return null;
+}
 
-        <div class="card">
-            <h2>🌍 التوزيع الجغرافي</h2>
-            <div class="countries">
-                ${Object.entries(stats.countryDistribution).map(([country, count]) => 
-                    `<div class="country">${country}: ${count} مستخدم</div>`
-                ).join('')}
-            </div>
-        </div>
+function generateRoomId() {
+    return 'room_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+}
 
-        <div class="card">
-            <h2>🖥️ معلومات الخادم</h2>
-            <p><strong>وقت التشغيل:</strong> ${Math.floor(process.uptime() / 3600)} ساعة</p>
-            <p><strong>استخدام الذاكرة:</strong> ${Math.round(process.memoryUsage().rss / 1024 / 1024)} MB</p>
-            <p><strong>آخر تحديث:</strong> ${new Date().toLocaleString('ar-SA')}</p>
-        </div>
-    </body>
-    </html>`;
+function createRoom(roomId, user1, user2) {
+    const room = {
+        users: [user1.id, user2.id],
+        createdAt: new Date(),
+        lastActivity: new Date()
+    };
     
-    res.send(html);
-});
+    activeRooms.set(roomId, room);
 
-// معالجة الأخطاء
-app.use((err, req, res, next) => {
-    console.error('خطأ في الخادم:', err);
-    res.status(500).json({
-        success: false,
-        error: 'خطأ داخلي في الخادم'
+    // تحديث معلومات المستخدمين
+    user1.roomId = roomId;
+    user2.roomId = roomId;
+    user1.isWaiting = false;
+    user2.isWaiting = false;
+
+    // إضافة المستخدمين للغرفة
+    const socket1 = io.sockets.sockets.get(user1.id);
+    const socket2 = io.sockets.sockets.get(user2.id);
+    
+    if (socket1) socket1.join(roomId);
+    if (socket2) socket2.join(roomId);
+
+    // إشعار كلا المستخدمين
+    io.to(roomId).emit('partner-found', {
+        roomId: roomId,
+        message: '🎉 تم العثور على شريك مناسب!',
+        partnerInfo: {
+            country: 'مجهول', // حفاظاً على الخصوصية
+            interests: []
+        }
     });
-});
+    
+    console.log('🏠 تم إنشاء غرفة:', roomId, 'للمستخدمين:', user1.id, 'و', user2.id);
+    updateServerStats();
+}
 
-// بدء الخادم
-const PORT = process.env.PORT || 3000;
-const HOST = process.env.HOST || 'localhost';
+function leaveRoom(userId) {
+    const user = activeUsers.get(userId);
+    if (!user || !user.roomId) return;
 
-server.listen(PORT, HOST, () => {
-    console.log(`🚀 خادم خمبقه يعمل على http://${HOST}:${PORT}`);
-    console.log(`📊 لوحة المراقبة: http://${HOST}:${PORT}/admin`);
-    console.log(`📈 API الإحصائيات: http://${HOST}:${PORT}/api/stats`);
-    console.log(`🌍 API الدول: http://${HOST}:${PORT}/api/countries`);
-    console.log(`💫 جاهز لاستقبال المستخدمين!`);
-});
+    const roomId = user.roomId;
+    const room = activeRooms.get(roomId);
+    
+    if (room) {
+        // إشعار الشريك
+        const partnerId = room.users.find(id => id !== userId);
+        if (partnerId) {
+            const partnerSocket = io.sockets.sockets.get(partnerId);
+            if (partnerSocket) {
+                partnerSocket.leave(roomId);
+                partnerSocket.emit('partner-left', {
+                    message: 'غادر الشريك المحادثة 👋'
+                });
+                
+                // إعادة تعيين معلومات الشريك
+                const partner = activeUsers.get(partnerId);
+                if (partner) {
+                    partner.roomId = null;
+                    partner.isWaiting = false;
+                }
+            }
+        }
+        
+        // حذف الغرفة
+        activeRooms.delete(roomId);
+    }
+    
+    // إعادة تعيين معلومات المستخدم
+    const socket = io.sockets.sockets.get(userId);
+    if (socket) {
+        socket.leave(roomId);
+    }
+    
+    user.roomId = null;
+    user.isWaiting = false;
+    
+    console.log('🚪 المستخدم', userId, 'غادر الغرفة:', roomId);
+    updateServerStats();
+}
 
-// إغلاق آمن
+function handleDisconnection(userId) {
+    const user = activeUsers.get(userId);
+    if (user) {
+        // مغادرة الغرفة إن وجدت
+        if (user.roomId) {
+            leaveRoom(userId);
+        }
+        
+        // إزالة من قائمة الانتظار
+        waitingUsers = waitingUsers.filter(id => id !== userId);
+        
+        // حذف المستخدم
+        activeUsers.delete(userId);
+        
+        console.log('🗑️ تم حذف المستخدم:', userId);
+    }
+    
+    updateServerStats();
+}
+
+function updateServerStats() {
+    const stats = {
+        activeUsers: activeUsers.size,
+        waitingUsers: waitingUsers.length,
+        activeRooms: activeRooms.size,
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime()
+    };
+    
+    // إرسال الإحصائيات لجميع المتصلين
+    io.emit('server-stats', stats);
+}
+
+// تنظيف الغرف المهجورة كل 5 دقائق
+setInterval(() => {
+    const now = Date.now();
+    const fiveMinutes = 5 * 60 * 1000;
+    
+    for (const [roomId, room] of activeRooms.entries()) {
+        if (now - new Date(room.lastActivity).getTime() > fiveMinutes) {
+            console.log('🧹 تنظيف الغرفة المهجورة:', roomId);
+            
+            // إزالة المستخدمين من الغرفة
+            room.users.forEach(userId => {
+                const user = activeUsers.get(userId);
+                if (user) {
+                    user.roomId = null;
+                    user.isWaiting = false;
+                }
+            });
+            
+            activeRooms.delete(roomId);
+        }
+    }
+    
+    updateServerStats();
+}, 5 * 60 * 1000);
+
+// معالجة إيقاف السيرفر بأمان
 process.on('SIGTERM', () => {
-    console.log('🔄 إيقاف الخادم...');
-    server.close(() => {
-        console.log('✅ تم إيقاف الخادم بأمان');
-        process.exit(0);
+    console.log('📴 إيقاف السيرفر...');
+    
+    // إشعار جميع المستخدمين
+    io.emit('server-shutdown', {
+        message: 'السيرفر سيتم إعادة تشغيله خلال ثوانِ...'
+    });
+    
+    // إغلاق اتصالات Socket.io
+    io.close(() => {
+        console.log('✅ تم إغلاق Socket.io بنجاح');
+        
+        // إغلاق السيرفر
+        server.close(() => {
+            console.log('✅ تم إيقاف السيرفر بنجاح');
+            process.exit(0);
+        });
     });
 });
 
 process.on('SIGINT', () => {
-    console.log('🔄 إيقاف الخادم (Ctrl+C)...');
-    userManager.logStats(); // طباعة الإحصائيات النهائية
-    server.close(() => {
-        console.log('✅ تم إيقاف الخادم بأمان');
-        process.exit(0);
-    });
+    console.log('\n📴 تم إيقاف السيرفر بـ Ctrl+C');
+    process.exit(0);
 });
 
-module.exports = { app, server, userManager };
+// تشغيل السيرفر
+const PORT = process.env.PORT || 3001;
+const HOST = '0.0.0.0';
+
+server.listen(PORT, HOST, () => {
+    console.log('🚀═══════════════════════════════════════════════════════════════🚀');
+    console.log('                           خمبقه Server                              ');
+    console.log('🚀═══════════════════════════════════════════════════════════════🚀');
+    console.log(`🌐 السيرفر يعمل على: http://${HOST}:${PORT}`);
+    console.log(`📊 مراقبة الصحة: http://${HOST}:${PORT}/health`);
+    console.log(`📈 الإحصائيات: http://${HOST}:${PORT}/stats`);
+    console.log(`🔧 البيئة: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`⚡ Node.js: ${process.version}`);
+    console.log('🚀═══════════════════════════════════════════════════════════════🚀');
+    console.log('✅ السيرفر جاهز لاستقبال الاتصالات!');
+    console.log('🔄 لإعادة التشغيل: اكتب rs واضغط Enter');
+    console.log('🛑 للإيقاف: اضغط Ctrl+C');
+    console.log('🚀═══════════════════════════════════════════════════════════════🚀');
+});
